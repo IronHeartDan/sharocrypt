@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sharocrypt/screens/encrypted_files_screen.dart';
 import 'package:sharocrypt/screens/home_screen.dart';
 
 void main() {
@@ -27,7 +28,43 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home:const HomeScreen(),
+      home: const MainScreen(),
+    );
+  }
+}
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({Key? key}) : super(key: key);
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: const Text(
+          "ShareCrypt",
+          style: TextStyle(color: Colors.black),
+        ),
+      ),
+      body: TabBarView(
+        controller: _controller,
+        children: const [HomeScreen(), EncryptedFilesScreen()],
+      ),
     );
   }
 }

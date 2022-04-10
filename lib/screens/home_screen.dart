@@ -24,7 +24,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final GlobalKey _scaffoldKey = GlobalKey();
   String? _path;
   final TextEditingController _controller = TextEditingController();
 
@@ -50,244 +49,236 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        key: _scaffoldKey,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          centerTitle: true,
-          title: const Text(
-            "ShareCrypt",
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-        body: Container(
-          padding: const EdgeInsets.all(10.0),
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [
+    return Container(
+      padding: const EdgeInsets.all(10.0),
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+          gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
             HexColor("#30cfd0"),
             HexColor("#330867"),
           ])),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                SizedBox(
-                  width: 300,
-                  height: 45,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                        primary: Colors.white, onPrimary: Colors.black),
-                    child: const Text("Select File"),
-                    onPressed: () async {
-                      var checkPermission = await Permission.storage.status;
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(
+              width: 300,
+              height: 45,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    primary: Colors.white, onPrimary: Colors.black),
+                child: const Text("Select File"),
+                onPressed: () async {
+                  var checkPermission = await Permission.storage.status;
 
-                      if (checkPermission.isPermanentlyDenied) {
-                        FlutterToast(context)
-                            .showToast(child: Text(checkPermission.toString()));
-                        return;
-                      }
+                  if (checkPermission.isPermanentlyDenied) {
+                    FlutterToast(context)
+                        .showToast(child: Text(checkPermission.toString()));
+                    return;
+                  }
 
-                      if (checkPermission.isDenied) {
-                        var res = await Permission.storage.request();
-                        if (res.isDenied || res.isPermanentlyDenied) {
-                          return;
-                        }
-                      }
+                  if (checkPermission.isDenied) {
+                    var res = await Permission.storage.request();
+                    if (res.isDenied || res.isPermanentlyDenied) {
+                      return;
+                    }
+                  }
 
-                      FlutterToast(context)
-                          .showToast(child: Text(checkPermission.toString()));
+                  FlutterToast(context)
+                      .showToast(child: Text(checkPermission.toString()));
 
-                      var res = await FilePicker.platform.pickFiles();
+                  var res = await FilePicker.platform.pickFiles();
 
-                      FlutterToast(context)
-                          .showToast(child: Text("Path :: ${res?.paths[0]}"));
-                      setState(() {
-                        _path = res?.paths[0];
-                      });
-                      var extension = _path?.split(".").last;
-                      print(extension);
-                    },
-                  ),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                SizedBox(
-                  width: 300,
-                  height: 45,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                        primary: Colors.white, onPrimary: Colors.black),
-                    child: const Text("Add Custom Key"),
-                    onPressed: () async {
-                      showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text("Enter Secret Key"),
-                              content: TextFormField(
-                                controller: _controller,
-                                decoration: const InputDecoration(
-                                    label: Text("Type Here"),
-                                    border: OutlineInputBorder()),
-                              ),
-                              actions: [
-                                TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text("Cancel")),
-                                TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        var inputValue = _controller.value.text;
-                                        if (inputValue.isEmpty ||
-                                            inputValue.length != 16) {
-                                          Navigator.of(context).pop();
-                                          FlutterToast(context).showToast(
-                                              child: const Text(
-                                                  "16 Characters Required For 128bit Key"));
-                                          return;
-                                        }
-                                        key = share_crypt.Key.fromUtf8(
-                                            inputValue);
-                                        Navigator.of(context).pop();
-                                      });
-                                    },
-                                    child: const Text("Use"))
-                              ],
-                            );
-                          });
-                    },
-                  ),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                SizedBox(
-                  width: 300,
-                  height: 45,
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          primary: Colors.white, onPrimary: Colors.black),
-                      onPressed: () {
-                        _generateKey();
-                      },
-                      child: const Text("Auto Generate Key")),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                SizedBox(
-                  width: 300,
-                  height: 45,
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          primary: Colors.white, onPrimary: Colors.black),
-                      onPressed: () async {
-                        if (_path == null) {
-                          FlutterToast(context).showToast(
-                              child: const Text("Please Select File"));
-                          return;
-                        }
-                        triggerEncrypt();
-                      },
-                      child: const Text("Encrypt File")),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                SizedBox(
-                  width: 300,
-                  height: 45,
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          primary: Colors.white, onPrimary: Colors.black),
-                      onPressed: () {
-                        triggerDecrypt();
-                      },
-                      child: const Text("Decrypt File")),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                SizedBox(
-                  width: 300,
-                  height: 45,
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          primary: Colors.white, onPrimary: Colors.black),
-                      onPressed: () {
-                        generateRsaPair();
-                      },
-                      child: const Text("Generate Key Pair")),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                SizedBox(
-                  width: 300,
-                  height: 45,
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          primary: Colors.white, onPrimary: Colors.black),
-                      onPressed: () {
-                        encryptKey();
-                      },
-                      child: const Text("Encrypt Secret Key")),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                SizedBox(
-                  width: 300,
-                  height: 45,
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          primary: Colors.white, onPrimary: Colors.black),
-                      onPressed: () {
-                        decryptKey();
-                      },
-                      child: const Text("Decrypt Secret Key")),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                SizedBox(
-                  width: 300,
-                  height: 45,
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          primary: Colors.white, onPrimary: Colors.black),
-                      onPressed: () {
-                        if (_encryptedKey != null) {
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) =>
-                                  GeneratedQr(encryptedKey: _encryptedKey!)));
-                        }
-                      },
-                      child: const Text("Generate QR")),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                SizedBox(
-                  width: 300,
-                  height: 45,
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          primary: Colors.white, onPrimary: Colors.black),
-                      onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => const ScanQr()));
-                      },
-                      child: const Text("Scan QR")),
-                ),
-              ],
+                  FlutterToast(context)
+                      .showToast(child: Text("Path :: ${res?.paths[0]}"));
+                  setState(() {
+                    _path = res?.paths[0];
+                  });
+                  var extension = _path?.split(".").last;
+                  print(extension);
+                },
+              ),
             ),
-          ),
-        ));
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              width: 300,
+              height: 45,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    primary: Colors.white, onPrimary: Colors.black),
+                child: const Text("Add Custom Key"),
+                onPressed: () async {
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text("Enter Secret Key"),
+                          content: TextFormField(
+                            controller: _controller,
+                            decoration: const InputDecoration(
+                                label: Text("Type Here"),
+                                border: OutlineInputBorder()),
+                          ),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text("Cancel")),
+                            TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    var inputValue = _controller.value.text;
+                                    if (inputValue.isEmpty ||
+                                        inputValue.length != 16) {
+                                      Navigator.of(context).pop();
+                                      FlutterToast(context).showToast(
+                                          child: const Text(
+                                              "16 Characters Required For 128bit Key"));
+                                      return;
+                                    }
+                                    key = share_crypt.Key.fromUtf8(inputValue);
+                                    Navigator.of(context).pop();
+                                  });
+                                },
+                                child: const Text("Use"))
+                          ],
+                        );
+                      });
+                },
+              ),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              width: 300,
+              height: 45,
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      primary: Colors.white, onPrimary: Colors.black),
+                  onPressed: () {
+                    _generateKey();
+                  },
+                  child: const Text("Auto Generate Key")),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              width: 300,
+              height: 45,
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      primary: Colors.white, onPrimary: Colors.black),
+                  onPressed: () async {
+                    if (_path == null) {
+                      FlutterToast(context)
+                          .showToast(child: const Text("Please Select File"));
+                      return;
+                    }
+                    triggerEncrypt();
+                  },
+                  child: const Text("Encrypt File")),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              width: 300,
+              height: 45,
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      primary: Colors.white, onPrimary: Colors.black),
+                  onPressed: () {
+                    triggerDecrypt();
+                  },
+                  child: const Text("Decrypt File")),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              width: 300,
+              height: 45,
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      primary: Colors.white, onPrimary: Colors.black),
+                  onPressed: () {
+                    generateRsaPair();
+                  },
+                  child: const Text("Generate Key Pair")),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              width: 300,
+              height: 45,
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      primary: Colors.white, onPrimary: Colors.black),
+                  onPressed: () {
+                    encryptKey();
+                  },
+                  child: const Text("Encrypt Secret Key")),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              width: 300,
+              height: 45,
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      primary: Colors.white, onPrimary: Colors.black),
+                  onPressed: () {
+                    decryptKey();
+                  },
+                  child: const Text("Decrypt Secret Key")),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              width: 300,
+              height: 45,
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      primary: Colors.white, onPrimary: Colors.black),
+                  onPressed: () {
+                    if (_encryptedKey != null) {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) =>
+                              GeneratedQr(encryptedKey: _encryptedKey!)));
+                    }
+                  },
+                  child: const Text("Generate QR")),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              width: 300,
+              height: 45,
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      primary: Colors.white, onPrimary: Colors.black),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => const ScanQr()));
+                  },
+                  child: const Text("Scan QR")),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> triggerEncrypt() async {
@@ -304,7 +295,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Save
     var dir = await getExternalStorageDirectory();
-    var toSave = File("${dir?.path}/encrypt.sc");
+    var extension = _path!.split(".").last;
+
+    var toSave = File("${dir?.path}/encrypt.$extension");
     await toSave.writeAsBytes(encryption.bytes);
 
     ScaffoldMessenger.of(context)
@@ -316,7 +309,9 @@ class _HomeScreenState extends State<HomeScreen> {
         .showSnackBar(const SnackBar(content: Text("Decryption Started")));
 
     var dir = await getExternalStorageDirectory();
-    var file = File("${dir?.path}/encrypt.sc");
+
+    var extension = _path!.split(".").last;
+    var file = File("${dir?.path}/encrypt.$extension");
     var input = await file.readAsBytes();
     var enc = share_crypt.Encrypted(input);
 
@@ -325,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
     var decryption = await compute(decrypt, map);
 
     //Save
-    var toSave = File("${dir?.path}/video.mp4");
+    var toSave = File("${dir?.path}/decrypt.$extension");
     await toSave.writeAsBytes(decryption);
 
     ScaffoldMessenger.of(context)
