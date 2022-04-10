@@ -51,7 +51,8 @@ class _MainScreenState extends State<MainScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
+      backgroundColor: Colors.white,
       // appBar: AppBar(
       //   backgroundColor: Colors.white,
       //   centerTitle: true,
@@ -64,7 +65,7 @@ class _MainScreenState extends State<MainScreen>
       //   controller: _controller,
       //   children: const [HomeScreen(), EncryptedFilesScreen()],
       // ),
-      body: const CustomScreen(),
+      body: CustomScreen(),
     );
   }
 }

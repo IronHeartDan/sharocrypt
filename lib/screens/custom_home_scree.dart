@@ -74,25 +74,41 @@ class _CustomScreenState extends State<CustomScreen>
                   height: 20,
                 ),
                 Row(
-                  children: const [
+                  children: [
                     Expanded(
                       child: Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: ListTile(
-                            leading: Icon(Icons.cloud_upload),
-                            title: Text("Backup"),
+                        clipBehavior: Clip.hardEdge,
+                        shape: const RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10))),
+                        color: HexColor("#E2E2E2"),
+                        child: InkWell(
+                          onTap: () {},
+                          child: const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: ListTile(
+                              leading: Icon(Icons.cloud_upload),
+                              title: Text("Backup"),
+                            ),
                           ),
                         ),
                       ),
                     ),
                     Expanded(
                       child: Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: ListTile(
-                            leading: Icon(Icons.golf_course_outlined),
-                            title: Text("Data Store"),
+                        clipBehavior: Clip.hardEdge,
+                        shape: const RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10))),
+                        color: HexColor("#E2E2E2"),
+                        child: InkWell(
+                          onTap: () {},
+                          child: const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: ListTile(
+                              leading: Icon(Icons.golf_course_outlined),
+                              title: Text("Data Store"),
+                            ),
                           ),
                         ),
                       ),
@@ -100,28 +116,46 @@ class _CustomScreenState extends State<CustomScreen>
                   ],
                 ),
                 const SizedBox(
-                  height: 20,
+                  height: 10,
                 ),
                 Row(
-                  children: const [
+                  children: [
                     Expanded(
                       child: Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: ListTile(
-                            leading: Icon(Icons.settings),
-                            title: Text("Settings"),
+                        clipBehavior: Clip.hardEdge,
+                        shape: const RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10))),
+                        color: HexColor("#E2E2E2"),
+                        child: InkWell(
+                          onTap: () {},
+                          child: const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: InkWell(
+                              child: ListTile(
+                                leading: Icon(Icons.settings),
+                                title: Text("Settings"),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
                     Expanded(
                       child: Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: ListTile(
-                            leading: Icon(Icons.help),
-                            title: Text("Help"),
+                        clipBehavior: Clip.hardEdge,
+                        shape: const RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10))),
+                        color: HexColor("#E2E2E2"),
+                        child: InkWell(
+                          onTap: () {},
+                          child: const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: ListTile(
+                              leading: Icon(Icons.help),
+                              title: Text("Help"),
+                            ),
                           ),
                         ),
                       ),

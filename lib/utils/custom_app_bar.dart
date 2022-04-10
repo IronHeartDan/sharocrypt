@@ -7,8 +7,7 @@ class CustomAppBar extends SliverPersistentHeaderDelegate {
 
   double appear(double shrinkOffset) => shrinkOffset / expandedHeight;
 
-  double disappear(double shrinkOffset) =>
-      1 - shrinkOffset / (expandedHeight / 2);
+  double disappear(double shrinkOffset) => 1 - shrinkOffset / expandedHeight;
 
   @override
   Widget build(
@@ -21,7 +20,11 @@ class CustomAppBar extends SliverPersistentHeaderDelegate {
           backgroundColor: Colors.black87,
           title: const Text("Encypto"),
           actions: [
-            IconButton(onPressed: () {}, icon: const Icon(Icons.info)),
+            IconButton(
+                onPressed: () {
+                  showAboutDialog(context: context);
+                },
+                icon: const Icon(Icons.info)),
           ],
         ),
         Positioned(
@@ -74,6 +77,9 @@ class CustomAppBar extends SliverPersistentHeaderDelegate {
                 ),
                 children: [
                   Card(
+                    elevation: 5,
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
@@ -89,6 +95,9 @@ class CustomAppBar extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                   Card(
+                    elevation: 5,
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
@@ -104,6 +113,9 @@ class CustomAppBar extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                   Card(
+                    elevation: 5,
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
@@ -119,17 +131,26 @@ class CustomAppBar extends SliverPersistentHeaderDelegate {
                     ),
                   ),
                   Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Image.asset("assets/asset_home_four.png"),
-                          const Text(
-                            "QR\nCode",
-                            style: TextStyle(fontWeight: FontWeight.w500),
-                          )
-                        ],
+                    clipBehavior: Clip.hardEdge,
+                    elevation: 5,
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
+                    child: InkWell(
+                      onTap: () {
+                        print("TAP");
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Image.asset("assets/asset_home_four.png"),
+                            const Text(
+                              "QR\nCode",
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
