@@ -45,6 +45,7 @@ dependencies:
   share_plus: ^4.0.3
   qr_code_scanner: ^0.7.0
   open_file: ^3.2.1
+  basic_utils: ^4.2.0
 
 dev_dependencies:
   flutter_test:

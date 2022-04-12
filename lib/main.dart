@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sharocrypt/screens/custom_home_scree.dart';
+import 'package:sharocrypt/screens/encrypted_files_screen.dart';
+import 'package:sharocrypt/screens/home_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,21 +53,21 @@ class _MainScreenState extends State<MainScreen>
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return  Scaffold(
       backgroundColor: Colors.white,
-      // appBar: AppBar(
-      //   backgroundColor: Colors.white,
-      //   centerTitle: true,
-      //   title: const Text(
-      //     "ShareCrypt",
-      //     style: TextStyle(color: Colors.black),
-      //   ),
-      // ),
-      // body: TabBarView(
-      //   controller: _controller,
-      //   children: const [HomeScreen(), EncryptedFilesScreen()],
-      // ),
-      body: CustomScreen(),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: const Text(
+          "ShareCrypt",
+          style: TextStyle(color: Colors.black),
+        ),
+      ),
+      body: TabBarView(
+        controller: _controller,
+        children: const [HomeScreen(), EncryptedFilesScreen()],
+      ),
+      // body: CustomScreen(),
     );
   }
 }

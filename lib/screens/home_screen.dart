@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:basic_utils/basic_utils.dart';
 import 'package:encrypt/encrypt.dart' as share_crypt;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -39,12 +40,27 @@ class _HomeScreenState extends State<HomeScreen> {
     var pair = await computeRSAKeyPair(getSecureRandom());
     _privateKey = pair.privateKey as RSAPrivateKey;
     _publicKey = pair.publicKey as RSAPublicKey;
+    var publicKeyPlainText = encodePublicKeyToPemPKCS1(_publicKey!);
+    var generatedPublicKey =
+        CryptoUtils.rsaPublicKeyFromPem(publicKeyPlainText);
+    setState(() {
+      _publicKey = generatedPublicKey;
+    });
+    // var privateKeyPlainText = encodePrivateKeyToPemPKCS1(_privateKey!);
+    // print(privateKeyPlainText);
   }
 
   void _generateKey() async {
     setState(() {
       key = share_crypt.Key.fromSecureRandom(32);
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    var initialKey = base64Encode(key.bytes);
+    print("AES KEY IS $initialKey");
   }
 
   @override

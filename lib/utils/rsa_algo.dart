@@ -1,13 +1,12 @@
+import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
-import 'package:pointycastle/api.dart';
-import 'package:pointycastle/asymmetric/api.dart';
 import 'package:pointycastle/asymmetric/oaep.dart';
 import 'package:pointycastle/asymmetric/rsa.dart';
-import 'package:pointycastle/key_generators/api.dart';
 import 'package:pointycastle/key_generators/rsa_key_generator.dart';
+import 'package:pointycastle/pointycastle.dart';
 import 'package:pointycastle/random/fortuna_random.dart';
 
 // Needed By Key Generation Method
@@ -39,16 +38,50 @@ AsymmetricKeyPair<PublicKey, PrivateKey> getRsaKeyPair(
 }
 
 // Convert PublicKey To Pem
-// String encodePublicKeyToPemPKCS1(RSAPublicKey publicKey) {
-//   var topLevel = ASN1Sequence();
-//
-//   topLevel.add(ASN1Integer(publicKey.modulus));
-//   topLevel.add(ASN1Integer(publicKey.exponent));
-//
-//   var dataBase64 = base64.encode(topLevel.encodedBytes);
-//   return """-----BEGIN PUBLIC KEY-----\r\n$dataBase64\r\n-----END PUBLIC KEY-----""";
-// }
+String encodePublicKeyToPemPKCS1(RSAPublicKey publicKey) {
+  var topLevel = ASN1Sequence();
+  var modulus = ASN1Integer(publicKey.modulus);
+  var exponent = ASN1Integer(publicKey.exponent);
 
+  topLevel.add(modulus);
+  topLevel.add(exponent);
+
+  var bytes = topLevel.encode();
+
+  var dataBase64 = base64Encode(bytes);
+  return """-----BEGIN PUBLIC KEY-----\r\n$dataBase64\r\n-----END PUBLIC KEY-----""";
+}
+
+// Convert PrivateKey To Pem
+String encodePrivateKeyToPemPKCS1(RSAPrivateKey privateKey) {
+  var topLevel = ASN1Sequence();
+
+  var version = ASN1Integer(BigInt.from(0));
+  var modulus = ASN1Integer(privateKey.n);
+  var publicExponent = ASN1Integer(privateKey.exponent);
+  var privateExponent = ASN1Integer(privateKey.privateExponent);
+  var p = ASN1Integer(privateKey.p);
+  var q = ASN1Integer(privateKey.q);
+  var dP = privateKey.privateExponent! % (privateKey.p! - BigInt.from(1));
+  var exp1 = ASN1Integer(dP);
+  var dQ = privateKey.privateExponent! % (privateKey.q! - BigInt.from(1));
+  var exp2 = ASN1Integer(dQ);
+  var iQ = privateKey.q!.modInverse(privateKey.p!);
+  var co = ASN1Integer(iQ);
+
+  topLevel.add(version);
+  topLevel.add(modulus);
+  topLevel.add(publicExponent);
+  topLevel.add(privateExponent);
+  topLevel.add(p);
+  topLevel.add(q);
+  topLevel.add(exp1);
+  topLevel.add(exp2);
+  topLevel.add(co);
+
+  var dataBase64 = base64.encode(topLevel.encode());
+  return """-----BEGIN PRIVATE KEY-----\r\n$dataBase64\r\n-----END PRIVATE KEY-----""";
+}
 
 // Encryption And Decryption
 Uint8List rsaEncrypt(RSAPublicKey myPublic, Uint8List dataToEncrypt) {
@@ -60,7 +93,8 @@ Uint8List rsaEncrypt(RSAPublicKey myPublic, Uint8List dataToEncrypt) {
 
 Uint8List rsaDecrypt(RSAPrivateKey myPrivate, Uint8List cipherText) {
   final decryptor = OAEPEncoding(RSAEngine())
-    ..init(false, PrivateKeyParameter<RSAPrivateKey>(myPrivate)); // false=decrypt
+    ..init(
+        false, PrivateKeyParameter<RSAPrivateKey>(myPrivate)); // false=decrypt
 
   return _processInBlocks(decryptor, cipherText);
 }
