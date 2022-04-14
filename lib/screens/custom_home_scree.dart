@@ -1,12 +1,8 @@
 import 'package:encrypt/encrypt.dart' as share_crypt;
-import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:sharocrypt/screens/file_encryption.dart';
-import 'package:sharocrypt/utils/aes_algo.dart';
 
 class CustomScreen extends StatefulWidget {
   const CustomScreen({Key? key}) : super(key: key);
@@ -16,10 +12,6 @@ class CustomScreen extends StatefulWidget {
 }
 
 class _CustomScreenState extends State<CustomScreen> {
-  late String _path;
-  late String _fileName;
-  final TextEditingController _controllerFileName = TextEditingController();
-
   share_crypt.Key key = share_crypt.Key.fromSecureRandom(32);
 
   @override
@@ -29,13 +21,19 @@ class _CustomScreenState extends State<CustomScreen> {
         appBar: AppBar(
           elevation: 0,
           backgroundColor: Colors.black87,
-          title: const Text("Encypto"),
+          title: const Text(
+            "Encypto",
+            style: TextStyle(color: Colors.white),
+          ),
           actions: [
             IconButton(
                 onPressed: () {
                   showAboutDialog(context: context);
                 },
-                icon: const Icon(Icons.info)),
+                icon: const Icon(
+                  Icons.info,
+                  color: Colors.white,
+                )),
           ],
         ),
         body: SingleChildScrollView(
@@ -104,101 +102,6 @@ class _CustomScreenState extends State<CustomScreen> {
                                           MaterialPageRoute(
                                               builder: (context) =>
                                                   const FileEncryption()));
-                                      return;
-                                      var checkPermission =
-                                          await Permission.storage.status;
-
-                                      if (checkPermission.isPermanentlyDenied) {
-                                        FlutterToast(context).showToast(
-                                            child: Text(
-                                                checkPermission.toString()));
-                                        return;
-                                      }
-
-                                      if (checkPermission.isDenied) {
-                                        var res =
-                                            await Permission.storage.request();
-                                        if (res.isDenied ||
-                                            res.isPermanentlyDenied) {
-                                          return;
-                                        }
-                                      }
-
-                                      var res =
-                                          await FilePicker.platform.pickFiles();
-
-                                      await showModalBottomSheet(
-                                          clipBehavior: Clip.hardEdge,
-                                          shape: const RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.only(
-                                                  topRight: Radius.circular(20),
-                                                  topLeft:
-                                                      Radius.circular(20))),
-                                          context: context,
-                                          builder: (context) {
-                                            return Container(
-                                              padding:
-                                                  const EdgeInsets.all(10.0),
-                                              child: Column(
-                                                children: [
-                                                  const Text(
-                                                    "AES File Encryption",
-                                                    style: TextStyle(
-                                                        fontSize: 24,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 20,
-                                                  ),
-                                                  TextFormField(
-                                                    controller:
-                                                        _controllerFileName,
-                                                    decoration: const InputDecoration(
-                                                        label: Text(
-                                                            "Enter File Name"),
-                                                        border:
-                                                            OutlineInputBorder()),
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 20,
-                                                  ),
-                                                  SizedBox(
-                                                    width: double.infinity,
-                                                    height: 40,
-                                                    child: ElevatedButton(
-                                                      onPressed: () {
-                                                        var name =
-                                                            _controllerFileName
-                                                                .text;
-                                                        var path =
-                                                            res?.paths[0];
-                                                        if (name.isNotEmpty &&
-                                                            path != null) {
-                                                          setState(() {
-                                                            _fileName = name;
-                                                            _path = path;
-                                                          });
-
-                                                          triggerEncrypt(
-                                                                  _path,
-                                                                  _fileName,
-                                                                  key)
-                                                              .whenComplete(() =>
-                                                                  Navigator.of(
-                                                                          context)
-                                                                      .pop());
-                                                        }
-                                                      },
-                                                      child:
-                                                          const Text("Encrypt"),
-                                                    ),
-                                                  )
-                                                ],
-                                              ),
-                                            );
-                                          });
-                                      // var extension = _path?.split(".").last;
                                     },
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),

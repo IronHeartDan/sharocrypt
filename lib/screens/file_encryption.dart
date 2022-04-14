@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:encrypt/encrypt.dart' as share_crypt;
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_advanced_segment/flutter_advanced_segment.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class FileEncryption extends StatefulWidget {
@@ -31,6 +31,8 @@ class _FileEncryptionState extends State<FileEncryption> {
   share_crypt.Encrypted? _currentEncryption;
 
   bool _processing = false;
+  bool _uploading = false;
+  double _uploadProgress = 0;
 
   @override
   void initState() {
@@ -70,8 +72,28 @@ class _FileEncryptionState extends State<FileEncryption> {
                   ],
                 );
               });
+          return false;
+        } else if (_uploading) {
+          showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("Uploading File"),
+                  content: const Text(
+                      "Uploading under process please wait on the screen"),
+                  actions: [
+                    TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text("OK"))
+                  ],
+                );
+              });
+          return false;
+        } else {
+          return true;
         }
-        return !_processing;
       },
       child: Scaffold(
         appBar: AppBar(
@@ -294,32 +316,34 @@ class _FileEncryptionState extends State<FileEncryption> {
         builder: (context) {
           return WillPopScope(
             onWillPop: () async {
-              await showDialog(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      title: const Text("Dismiss Encrypted File?"),
-                      content: const Text(
-                          "Please upload the file to be able to share"),
-                      actions: [
-                        TextButton(
-                            onPressed: () {
-                              handleDismiss();
-                            },
-                            child: const Text(
-                              "Dismiss File?",
-                              style: TextStyle(color: Colors.red),
-                            )),
-                        TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text("OK")),
-                      ],
-                    );
-                  });
-
-              return false;
+              if (_currentEncryption != null) {
+                await showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text("Dismiss Encrypted File?"),
+                        content: const Text(
+                            "Please upload the file to be able to share"),
+                        actions: [
+                          TextButton(
+                              onPressed: () {
+                                handleDismiss();
+                              },
+                              child: const Text(
+                                "Dismiss File?",
+                                style: TextStyle(color: Colors.red),
+                              )),
+                          TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text("OK")),
+                        ],
+                      );
+                    });
+                return false;
+              }
+              return true;
             },
             child: Padding(
               padding: const EdgeInsets.all(10.0),
@@ -348,7 +372,7 @@ class _FileEncryptionState extends State<FileEncryption> {
                           handleUpload();
                         },
                         child: const Text("Upload")),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -375,9 +399,57 @@ class _FileEncryptionState extends State<FileEncryption> {
     // await toSave.writeAsBytes(encryption.bytes);
   }
 
-  void handleUpload() {
-    setState(() {
-      _currentEncryption = null;
+  Future<void> handleUpload() async {
+    var storageRef = FirebaseStorage.instance.ref("encrypted_files");
+    var ref = storageRef.child(_fileName!);
+    Navigator.of(context).pop();
+    var info = ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Row(
+        children: const [
+          CircularProgressIndicator(),
+          SizedBox(
+            width: 20,
+          ),
+          Text("Uploading"),
+        ],
+      ),
+      duration: Duration(days: 365),
+      behavior: SnackBarBehavior.fixed,
+      dismissDirection: DismissDirection.none,
+    ));
+    ref
+        .putData(_currentEncryption!.bytes)
+        .snapshotEvents
+        .listen((taskSnapshot) {
+      switch (taskSnapshot.state) {
+        case TaskState.running:
+          var status = taskSnapshot.bytesTransferred / taskSnapshot.totalBytes;
+          print(status);
+          setState(() {
+            _uploading = true;
+            _uploadProgress = status;
+          });
+          break;
+        case TaskState.success:
+          info.close();
+          FlutterToast(context).showToast(child: const Text("Uploaded"));
+          setState(() {
+            _uploading = false;
+            _path = null;
+            _fileName = null;
+            _currentEncryption = null;
+          });
+          break;
+        case TaskState.error:
+          info.close();
+          FlutterToast(context)
+              .showToast(child: const Text("An Error Occurred"));
+          break;
+        case TaskState.paused:
+          break;
+        case TaskState.canceled:
+          break;
+      }
     });
   }
 
@@ -391,6 +463,8 @@ class _FileEncryptionState extends State<FileEncryption> {
     });
   }
 }
+
+Future<void> uploadFile(Map map) async {}
 
 Future<share_crypt.Encrypted> encryptFile(Map map) async {
   // Encryption
