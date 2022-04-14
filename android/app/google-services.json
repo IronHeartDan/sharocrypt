@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "462056060686",
+    "project_id": "sharecrypt-a8fd3",
+    "storage_bucket": "sharecrypt-a8fd3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:462056060686:android:af6181fd9fc9b2f2e4895f",
+        "android_client_info": {
+          "package_name": "com.zdem.sharocrypt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "462056060686-bnjehbo5mrr3q5illbi7rh1f7s99tuau.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAppHsnmSBO81z3HVIMNVVT9M_3lkY_GU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "462056060686-bnjehbo5mrr3q5illbi7rh1f7s99tuau.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

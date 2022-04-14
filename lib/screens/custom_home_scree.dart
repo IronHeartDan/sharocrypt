@@ -1,5 +1,6 @@
 import 'package:encrypt/encrypt.dart' as share_crypt;
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
@@ -412,7 +413,9 @@ class _CustomScreenState extends State<CustomScreen> {
                                     BorderRadius.all(Radius.circular(10))),
                             color: HexColor("#E2E2E2"),
                             child: InkWell(
-                              onTap: () {},
+                              onTap: () async {
+                                await FirebaseAuth.instance.signOut();
+                              },
                               child: const Padding(
                                 padding: EdgeInsets.all(8.0),
                                 child: InkWell(
