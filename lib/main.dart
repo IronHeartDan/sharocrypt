@@ -53,21 +53,21 @@ class _MainScreenState extends State<MainScreen>
 
   @override
   Widget build(BuildContext context) {
-    return  Scaffold(
+    return  const Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        centerTitle: true,
-        title: const Text(
-          "ShareCrypt",
-          style: TextStyle(color: Colors.black),
-        ),
-      ),
-      body: TabBarView(
-        controller: _controller,
-        children: const [HomeScreen(), EncryptedFilesScreen()],
-      ),
-      // body: CustomScreen(),
+      // appBar: AppBar(
+      //   backgroundColor: Colors.white,
+      //   centerTitle: true,
+      //   title: const Text(
+      //     "ShareCrypt",
+      //     style: TextStyle(color: Colors.black),
+      //   ),
+      // ),
+      // body: TabBarView(
+      //   controller: _controller,
+      //   children: const [HomeScreen(), EncryptedFilesScreen()],
+      // ),
+      body: CustomScreen(),
     );
   }
 }
