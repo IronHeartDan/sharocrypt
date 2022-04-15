@@ -127,11 +127,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Text("Don't have an account ?"),
                       TextButton(
                           onPressed: () {
-                            Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const RegisterScreen()),
-                                (route) => false);
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => const RegisterScreen()));
                           },
                           child: const Text(
                             "SignUp",
@@ -161,9 +158,8 @@ class _LoginScreenState extends State<LoginScreen> {
     var _pass = _passwordController.text;
 
     try {
-      var credential =
-          await auth.signInWithEmailAndPassword(email: _email, password: _pass);
-      await FirebaseAuth.instance.signInWithCredential(credential.credential!);
+      await auth.signInWithEmailAndPassword(email: _email, password: _pass);
+      info.close();
     } on FirebaseAuthException catch (e) {
       setState(() {
         _isLoading = false;

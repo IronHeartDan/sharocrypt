@@ -111,7 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: Text("Phone"),
                         border: OutlineInputBorder(
                             borderRadius:
-                            BorderRadius.all(Radius.circular(10)))),
+                                BorderRadius.all(Radius.circular(10)))),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please Enter Phone';
@@ -202,17 +202,91 @@ class _RegisterScreenState extends State<RegisterScreen> {
     var auth = FirebaseAuth.instance;
     var _name = _nameController.text;
     var _email = _emailController.text;
+    var _phone = _phoneController.text;
     var _pass = _passwordController.text;
 
     try {
-      final credential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final credential = await auth.createUserWithEmailAndPassword(
         email: _email,
         password: _pass,
       );
       await credential.user?.updateDisplayName(_name);
-      var phoneAuthCredential = await
-      await FirebaseAuth.instance.signInWithCredential(credential.credential!);
+
+      await auth.verifyPhoneNumber(
+          phoneNumber: "+91$_phone",
+          verificationCompleted: (phoneAuthCredential) async {
+            await credential.user?.updatePhoneNumber(phoneAuthCredential);
+            info.close();
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
+          },
+          verificationFailed: (e) {
+            FlutterToast(context).showToast(child: Text("${e.message}"));
+          },
+          codeSent: (id, code) async {
+            var phoneAuthCredential = null;
+            var _codeController = TextEditingController();
+            var _codeForm = GlobalKey<FormState>();
+            await showDialog(
+                context: context,
+                builder: (context) {
+                  return WillPopScope(
+                    onWillPop: () async {
+                      return false;
+                    },
+                    child: AlertDialog(
+                      title: const Text("Enter OTP"),
+                      content: Form(
+                        key: _codeForm,
+                        child: TextFormField(
+                          controller: _codeController,
+                          maxLength: 6,
+                          decoration: const InputDecoration(
+                              label: Text("Password"),
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10)))),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please Enter Verification Code";
+                            }
+                            try {
+                              PhoneAuthCredential credential =
+                                  PhoneAuthProvider.credential(
+                                      verificationId: id, smsCode: value);
+                              print("Setting IT");
+                              setState(() {
+                                phoneAuthCredential = credential;
+                              });
+                            } on FirebaseAuthException catch (e) {
+                              print("Error");
+                              return e.message;
+                            }
+
+                            return null;
+                          },
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                            onPressed: () async {
+                              if (_codeForm.currentState!.validate()) {
+                                print("To Update and login");
+                                await credential.user
+                                    ?.updatePhoneNumber(phoneAuthCredential);
+                                info.close();
+                                Navigator.of(context).pop();
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            child: const Text("Verify"))
+                      ],
+                    ),
+                  );
+                },
+                barrierDismissible: false);
+          },
+          codeAutoRetrievalTimeout: (codeAutoRetrievalTimeout) {});
     } on FirebaseAuthException catch (e) {
       setState(() {
         _isLoading = false;

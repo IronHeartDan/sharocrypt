@@ -44,55 +44,23 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  var appUser = null;
+
+  @override
+  void initState() {
+    super.initState();
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      print("Current App User $user");
+      setState(() {
+        appUser = user;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: StreamBuilder(
-          stream: FirebaseAuth.instance.authStateChanges(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Column(children: [
-                const Icon(
-                  Icons.error_outline,
-                  color: Colors.red,
-                  size: 60,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Text('Error: ${snapshot.error}'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text('Stack trace: ${snapshot.stackTrace}'),
-                ),
-              ]);
-            } else {
-              switch (snapshot.connectionState) {
-                case ConnectionState.none:
-                  return const Center(
-                    child: Icon(
-                      Icons.error,
-                      color: Colors.red,
-                      size: 60,
-                    ),
-                  );
-                case ConnectionState.waiting:
-                  return const SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: CircularProgressIndicator(),
-                  );
-                case ConnectionState.done:
-                case ConnectionState.active:
-                  var user = snapshot.data;
-                  if (user != null) {
-                    return const CustomScreen();
-                  } else {
-                    return const LoginScreen();
-                  }
-              }
-            }
-          }),
+      body: appUser == null ? const LoginScreen() : const CustomScreen(),
     );
   }
 }

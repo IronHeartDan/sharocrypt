@@ -52,18 +52,18 @@ class _CustomScreenState extends State<CustomScreen> {
                         left: 20,
                         top: 50,
                         child: Row(
-                          children: const [
-                            Text(
+                          children:  [
+                            const Text(
                               "Hello,",
                               style:
                                   TextStyle(fontSize: 24, color: Colors.grey),
                             ),
-                            SizedBox(
+                            const SizedBox(
                               width: 5,
                             ),
                             Text(
-                              "Danish",
-                              style: TextStyle(
+                              "${FirebaseAuth.instance.currentUser?.displayName}",
+                              style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.grey),
