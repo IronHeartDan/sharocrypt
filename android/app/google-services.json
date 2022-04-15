@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "462056060686-ead23bee15tkutndh5bl4q5701h686vh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zdem.sharocrypt",
+            "certificate_hash": "5ea23e3018f5edd65b55fae95491b59ef312b3c0"
+          }
+        },
+        {
           "client_id": "462056060686-bnjehbo5mrr3q5illbi7rh1f7s99tuau.apps.googleusercontent.com",
           "client_type": 3
         }

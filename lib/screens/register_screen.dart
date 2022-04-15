@@ -17,6 +17,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
@@ -95,6 +96,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return 'Please Enter Email';
                       } else if (!isEmail(value)) {
                         return "Invalid Email";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  TextFormField(
+                    controller: _phoneController,
+                    textInputAction: TextInputAction.next,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                        label: Text("Phone"),
+                        border: OutlineInputBorder(
+                            borderRadius:
+                            BorderRadius.all(Radius.circular(10)))),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please Enter Phone';
+                      } else if (value.length != 10) {
+                        return "Invalid Phone";
                       }
                       return null;
                     },
@@ -189,6 +211,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _pass,
       );
       await credential.user?.updateDisplayName(_name);
+      var phoneAuthCredential = await
       await FirebaseAuth.instance.signInWithCredential(credential.credential!);
     } on FirebaseAuthException catch (e) {
       setState(() {
