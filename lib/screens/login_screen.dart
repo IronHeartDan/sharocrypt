@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
+import 'package:sharocrypt/screens/custom_home_scree.dart';
 import 'package:sharocrypt/screens/register_screen.dart';
 import 'package:validators/validators.dart';
 
@@ -127,8 +128,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Text("Don't have an account ?"),
                       TextButton(
                           onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => const RegisterScreen()));
+                            Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const RegisterScreen()),
+                                (route) => false);
                           },
                           child: const Text(
                             "SignUp",
@@ -160,6 +164,9 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await auth.signInWithEmailAndPassword(email: _email, password: _pass);
       info.close();
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const CustomScreen()),
+          (route) => false);
     } on FirebaseAuthException catch (e) {
       setState(() {
         _isLoading = false;

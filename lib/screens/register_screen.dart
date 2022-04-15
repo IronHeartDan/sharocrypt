@@ -6,6 +6,8 @@ import 'package:hexcolor/hexcolor.dart';
 import 'package:sharocrypt/screens/login_screen.dart';
 import 'package:validators/validators.dart';
 
+import 'custom_home_scree.dart';
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
 
@@ -217,16 +219,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
           verificationCompleted: (phoneAuthCredential) async {
             await credential.user?.updatePhoneNumber(phoneAuthCredential);
             info.close();
-            Navigator.of(context).pop();
-            Navigator.of(context).pop();
+            Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const CustomScreen()), (
+                route) => false);
           },
           verificationFailed: (e) {
             FlutterToast(context).showToast(child: Text("${e.message}"));
           },
           codeSent: (id, code) async {
-            var phoneAuthCredential = null;
             var _codeController = TextEditingController();
             var _codeForm = GlobalKey<FormState>();
+            bool invalidCode = false;
             await showDialog(
                 context: context,
                 builder: (context) {
@@ -234,54 +237,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onWillPop: () async {
                       return false;
                     },
-                    child: AlertDialog(
-                      title: const Text("Enter OTP"),
-                      content: Form(
-                        key: _codeForm,
-                        child: TextFormField(
-                          controller: _codeController,
-                          maxLength: 6,
-                          decoration: const InputDecoration(
-                              label: Text("Password"),
-                              border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10)))),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Please Enter Verification Code";
-                            }
-                            try {
-                              PhoneAuthCredential credential =
-                                  PhoneAuthProvider.credential(
-                                      verificationId: id, smsCode: value);
-                              print("Setting IT");
-                              setState(() {
-                                phoneAuthCredential = credential;
-                              });
-                            } on FirebaseAuthException catch (e) {
-                              print("Error");
-                              return e.message;
-                            }
-
-                            return null;
-                          },
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                            onPressed: () async {
-                              if (_codeForm.currentState!.validate()) {
-                                print("To Update and login");
-                                await credential.user
-                                    ?.updatePhoneNumber(phoneAuthCredential);
-                                info.close();
-                                Navigator.of(context).pop();
-                                Navigator.of(context).pop();
+                    child:
+                        StatefulBuilder(builder: (context, setAlertBoxState) {
+                      return AlertDialog(
+                        title: const Text("Enter OTP"),
+                        content: Form(
+                          key: _codeForm,
+                          child: TextFormField(
+                            controller: _codeController,
+                            maxLength: 6,
+                            decoration: InputDecoration(
+                                errorText: invalidCode ? "Invalid OTP" : null,
+                                label: const Text("OTP"),
+                                border: const OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10)))),
+                            validator: (value) {
+                              if (value == null ||
+                                  value.isEmpty ||
+                                  value.length < 6) {
+                                return "Please Enter Verification Code Of Length 6";
                               }
+
+                              return null;
                             },
-                            child: const Text("Verify"))
-                      ],
-                    ),
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                              onPressed: () async {
+                                if (_codeForm.currentState!.validate()) {
+                                  setAlertBoxState(() {
+                                    invalidCode = false;
+                                  });
+
+                                  var phoneAuthCredential =
+                                      PhoneAuthProvider.credential(
+                                          verificationId: id,
+                                          smsCode: _codeController.text);
+                                  try {
+                                    await credential.user?.updatePhoneNumber(
+                                        phoneAuthCredential);
+
+                                    info.close();
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                        MaterialPageRoute(builder: (context) => const CustomScreen()), (
+                                        route) => false);
+                                  } on FirebaseAuthException catch (e) {
+                                    setAlertBoxState(() {
+                                      invalidCode = true;
+                                    });
+                                  }
+                                }
+                              },
+                              child: const Text("Verify"))
+                        ],
+                      );
+                    }),
                   );
                 },
                 barrierDismissible: false);

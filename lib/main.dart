@@ -44,23 +44,12 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  var appUser = null;
-
-  @override
-  void initState() {
-    super.initState();
-    FirebaseAuth.instance.authStateChanges().listen((user) {
-      print("Current App User $user");
-      setState(() {
-        appUser = user;
-      });
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: appUser == null ? const LoginScreen() : const CustomScreen(),
+      body: FirebaseAuth.instance.currentUser == null
+          ? const LoginScreen()
+          : const CustomScreen(),
     );
   }
 }
