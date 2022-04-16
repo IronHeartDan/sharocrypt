@@ -12,7 +12,6 @@ class ScanQr extends StatefulWidget {
 }
 
 class _ScanQrState extends State<ScanQr> {
-  bool _permission = false;
   final GlobalKey _qrKey = GlobalKey();
 
   Barcode? result;
@@ -47,7 +46,6 @@ class _ScanQrState extends State<ScanQr> {
       status = await Permission.camera.request();
       if (status.isGranted) {
         setState(() {
-          _permission = status.isGranted;
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -63,6 +61,26 @@ class _ScanQrState extends State<ScanQr> {
             MediaQuery.of(context).size.height < 400)
         ? 250.0
         : 300.0;
+
+    if(result != null){
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          centerTitle: true,
+          title: const Text(
+            "Found QR",
+            style: TextStyle(color: Colors.black),
+          ),
+        ),
+        body: Container(
+          child: Column(
+            children: [
+
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(

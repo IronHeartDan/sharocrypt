@@ -1,5 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui';
 
+import 'package:basic_utils/basic_utils.dart';
 import 'package:encrypt/encrypt.dart' as share_crypt;
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -9,8 +13,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_advanced_segment/flutter_advanced_segment.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sharocrypt/screens/search_screen.dart';
+import 'package:sharocrypt/utils/rsa_algo.dart';
 
 class FileEncryption extends StatefulWidget {
   const FileEncryption({Key? key}) : super(key: key);
@@ -33,7 +41,7 @@ class _FileEncryptionState extends State<FileEncryption> {
 
   bool _processing = false;
   bool _uploading = false;
-  double _uploadProgress = 0;
+  RSAPublicKey? receiverPublicKey;
 
   @override
   void initState() {
@@ -242,9 +250,15 @@ class _FileEncryptionState extends State<FileEncryption> {
                             primary: HexColor("#3A3843"),
                             onPrimary: Colors.white),
                         onPressed: () {
-                          handleEncryption();
+                          if (!_processing && !_uploading) {
+                            handleEncryption();
+                          }
                         },
-                        child: const Text("Encrypt"))),
+                        child: _processing
+                            ? const CircularProgressIndicator()
+                            : _uploading
+                                ? const CircularProgressIndicator()
+                                : const Text("Encrypt"))),
                 const SizedBox(
                   height: 50,
                 ),
@@ -277,14 +291,12 @@ class _FileEncryptionState extends State<FileEncryption> {
     }
 
     var res = await FilePicker.platform.pickFiles();
-    bool? shouldSet = null;
     if (res != null) {
-      shouldSet = await Navigator.of(context)
+      receiverPublicKey = await Navigator.of(context)
           .push(MaterialPageRoute(builder: (context) => const SearchScreen()));
     }
 
-    if (shouldSet != null && shouldSet) {
-      print("State Happening");
+    if (receiverPublicKey != null) {
       setState(() {
         _fileName = res?.files[0].name;
         _path = res?.paths[0];
@@ -314,7 +326,7 @@ class _FileEncryptionState extends State<FileEncryption> {
       _processing = false;
     });
 
-    showModalBottomSheet(
+    await showModalBottomSheet(
         enableDrag: false,
         isDismissible: false,
         shape: const RoundedRectangleBorder(
@@ -415,33 +427,37 @@ class _FileEncryptionState extends State<FileEncryption> {
     var info = ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Row(
         children: const [
-          CircularProgressIndicator(),
+          CircularProgressIndicator(
+            color: Colors.white,
+          ),
           SizedBox(
             width: 20,
           ),
           Text("Uploading"),
         ],
       ),
-      duration: Duration(days: 365),
+      duration: const Duration(days: 365),
       behavior: SnackBarBehavior.fixed,
       dismissDirection: DismissDirection.none,
     ));
     ref
         .putData(_currentEncryption!.bytes)
         .snapshotEvents
-        .listen((taskSnapshot) {
+        .listen((taskSnapshot) async {
       switch (taskSnapshot.state) {
         case TaskState.running:
           var status = taskSnapshot.bytesTransferred / taskSnapshot.totalBytes;
           print(status);
           setState(() {
             _uploading = true;
-            _uploadProgress = status;
           });
           break;
         case TaskState.success:
           info.close();
           FlutterToast(context).showToast(child: const Text("Uploaded"));
+          var downloadURL = await taskSnapshot.ref.getDownloadURL();
+          var encryptedKey = encryptKey();
+          generateQR(downloadURL, encryptedKey, ref);
           setState(() {
             _uploading = false;
             _path = null;
@@ -469,11 +485,145 @@ class _FileEncryptionState extends State<FileEncryption> {
       _path = null;
       _fileName = null;
       _currentEncryption = null;
+      receiverPublicKey = null;
+      _generateRandomKey();
     });
   }
-}
 
-Future<void> uploadFile(Map map) async {}
+  String encryptKey() {
+    var encryptedKey = rsaEncrypt(receiverPublicKey!, key.bytes);
+    return base64Encode(encryptedKey);
+  }
+
+  void generateQR(
+      String downloadURL, String encryptedKey, Reference reference) async {
+    var data = jsonEncode({"URL": downloadURL, "key": encryptedKey});
+    var qrValidationResult = QrValidator.validate(
+      data: data,
+      version: QrVersions.auto,
+      errorCorrectionLevel: QrErrorCorrectLevel.L,
+    );
+    await showModalBottomSheet(
+        enableDrag: false,
+        isDismissible: false,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(10), topRight: Radius.circular(10)),
+        ),
+        context: context,
+        builder: (context) {
+          return WillPopScope(
+            onWillPop: () async {
+              if (receiverPublicKey == null) {
+                return true;
+              }
+              await showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text("Dismiss File ?"),
+                      content: const Text(
+                          "Please Share The QR or else Dismissing Will Also Delete The File!"),
+                      actions: [
+                        TextButton(
+                            onPressed: () async {
+                              await reference.delete();
+                              handleDismiss();
+                            },
+                            child: const Text(
+                              "Dismiss",
+                              style: TextStyle(color: Colors.red),
+                            )),
+                        TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text("Ok")),
+                      ],
+                    );
+                  });
+
+              return false;
+            },
+            child: Container(
+              padding: const EdgeInsets.all(10.0),
+              child: Column(
+                children: [
+                  const Text(
+                    "QR-Code",
+                    style: TextStyle(
+                      fontSize: 24,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  const Divider(
+                    thickness: 2,
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  QrImage(
+                    data: data,
+                    size: 250,
+                    backgroundColor: Colors.white,
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            shape: const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10))),
+                            primary: HexColor("#3A3843"),
+                            onPrimary: Colors.white),
+                        onPressed: () async {
+                          if (qrValidationResult.status ==
+                              QrValidationStatus.valid) {
+                            var qrCode = qrValidationResult.qrCode;
+                            var painter = QrPainter.withQr(
+                              qr: qrCode!,
+                              color: const Color(0xFF000000),
+                              gapless: true,
+                              embeddedImageStyle: null,
+                              embeddedImage: null,
+                            );
+
+                            Directory tempDir = await getTemporaryDirectory();
+                            String tempPath = tempDir.path;
+                            final ts = DateTime.now()
+                                .millisecondsSinceEpoch
+                                .toString();
+                            String path = '$tempPath/$ts.png';
+
+                            final picData = await painter.toImageData(2048,
+                                format: ImageByteFormat.png);
+
+                            await writeToFile(picData!, path);
+
+                            Share.shareFiles([path], text: 'Share QR');
+                          }
+                        },
+                        child: const Text("Share")),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+  }
+
+  Future<void> writeToFile(ByteData data, String path) async {
+    final buffer = data.buffer;
+    await File(path).writeAsBytes(
+        buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+  }
+}
 
 Future<share_crypt.Encrypted> encryptFile(Map map) async {
   // Encryption

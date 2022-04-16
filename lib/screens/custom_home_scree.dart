@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:sharocrypt/screens/file_encryption.dart';
 import 'package:sharocrypt/screens/login_screen.dart';
+import 'package:sharocrypt/screens/scan_qr.dart';
 
 class CustomScreen extends StatefulWidget {
   const CustomScreen({Key? key}) : super(key: key);
@@ -193,7 +194,10 @@ class _CustomScreenState extends State<CustomScreen> {
                                           Radius.circular(10))),
                                   child: InkWell(
                                     onTap: () {
-                                      print("TAP");
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const ScanQr()));
                                     },
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
