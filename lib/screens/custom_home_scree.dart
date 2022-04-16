@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:sharocrypt/screens/file_encryption.dart';
 import 'package:sharocrypt/screens/scan_qr.dart';
+import 'package:sharocrypt/screens/secure_password.dart';
 import 'package:sharocrypt/screens/settings_screen.dart';
 
 import 'about_screen.dart';
@@ -157,7 +158,12 @@ class _CustomScreenState extends State<CustomScreen> {
                                       borderRadius: BorderRadius.all(
                                           Radius.circular(10))),
                                   child: InkWell(
-                                    onTap: () {},
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const SecurePassword()));
+                                    },
                                     child: Padding(
                                       padding: const EdgeInsets.all(10.0),
                                       child: Row(
