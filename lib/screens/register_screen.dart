@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:sharocrypt/screens/login_screen.dart';
+import 'package:sharocrypt/utils/rsa_algo.dart';
 import 'package:validators/validators.dart';
 
 import 'custom_home_scree.dart';
@@ -278,7 +279,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   try {
                                     await credential.user?.updatePhoneNumber(
                                         phoneAuthCredential);
-
+                                    await manageRSA();
                                     info.close();
                                     Navigator.of(context).pushAndRemoveUntil(
                                         MaterialPageRoute(

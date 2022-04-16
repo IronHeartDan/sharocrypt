@@ -46,10 +46,8 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: FirebaseAuth.instance.currentUser == null
-          ? const LoginScreen()
-          : const CustomScreen(),
-    );
+    return FirebaseAuth.instance.currentUser == null
+        ? const LoginScreen()
+        : const CustomScreen();
   }
 }

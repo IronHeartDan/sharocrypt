@@ -1,9 +1,6 @@
-import 'package:basic_utils/basic_utils.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:sharocrypt/screens/custom_home_scree.dart';
@@ -216,26 +213,6 @@ class _LoginScreenState extends State<LoginScreen> {
       info.close();
       print(e);
       FlutterToast(context).showToast(child: Text(e.toString()));
-    }
-  }
-
-  Future<void> manageRSA() async {
-    var keystore = const FlutterSecureStorage();
-    var pair = await computeRSAKeyPair(getSecureRandom());
-    var rsaPublicKey = pair.publicKey as RSAPublicKey;
-    var rsaPrivateKey = pair.privateKey as RSAPrivateKey;
-    var publicKey = encodePublicKeyToPemPKCS1(rsaPublicKey);
-    var privateKey = encodePrivateKeyToPemPKCS1(rsaPrivateKey);
-    keystore.write(key: "privateKey", value: privateKey);
-    var user = FirebaseAuth.instance.currentUser;
-    var ref =
-        FirebaseFirestore.instance.collection("users").doc(user?.phoneNumber);
-    var data = {"publicKey": publicKey};
-    var check = await ref.get();
-    if (check.exists) {
-      await ref.update(data);
-    } else {
-      await ref.set(data);
     }
   }
 }

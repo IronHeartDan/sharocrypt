@@ -3,8 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:sharocrypt/screens/file_encryption.dart';
-import 'package:sharocrypt/screens/login_screen.dart';
 import 'package:sharocrypt/screens/scan_qr.dart';
+import 'package:sharocrypt/screens/settings_screen.dart';
+
+import 'about_screen.dart';
 
 class CustomScreen extends StatefulWidget {
   const CustomScreen({Key? key}) : super(key: key);
@@ -27,16 +29,6 @@ class _CustomScreenState extends State<CustomScreen> {
             "Encypto",
             style: TextStyle(color: Colors.white),
           ),
-          actions: [
-            IconButton(
-                onPressed: () {
-                  showAboutDialog(context: context);
-                },
-                icon: const Icon(
-                  Icons.info,
-                  color: Colors.white,
-                )),
-          ],
         ),
         body: SingleChildScrollView(
           child: Column(
@@ -276,59 +268,11 @@ class _CustomScreenState extends State<CustomScreen> {
                                     BorderRadius.all(Radius.circular(10))),
                             color: HexColor("#E2E2E2"),
                             child: InkWell(
-                              onTap: () {},
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: ListTile(
-                                  leading: Icon(Icons.cloud_upload),
-                                  title: Text("Backup"),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Card(
-                            clipBehavior: Clip.hardEdge,
-                            shape: const RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                            color: HexColor("#E2E2E2"),
-                            child: InkWell(
-                              onTap: () {},
-                              child: const Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: ListTile(
-                                  leading: Icon(Icons.golf_course_outlined),
-                                  title: Text("Data Store"),
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Card(
-                            clipBehavior: Clip.hardEdge,
-                            shape: const RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                            color: HexColor("#E2E2E2"),
-                            child: InkWell(
                               onTap: () async {
-                                await FirebaseAuth.instance.signOut();
-                                Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const LoginScreen()),
-                                    (route) => false);
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (context) =>
+                                        const SettingsScreen()));
+                                return;
                               },
                               child: const Padding(
                                 padding: EdgeInsets.all(8.0),
@@ -350,7 +294,10 @@ class _CustomScreenState extends State<CustomScreen> {
                                     BorderRadius.all(Radius.circular(10))),
                             color: HexColor("#E2E2E2"),
                             child: InkWell(
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (context) => const AboutScreen()));
+                              },
                               child: const Padding(
                                 padding: EdgeInsets.all(8.0),
                                 child: ListTile(

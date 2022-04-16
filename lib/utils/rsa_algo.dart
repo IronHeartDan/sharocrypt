@@ -2,7 +2,10 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pointycastle/asymmetric/oaep.dart';
 import 'package:pointycastle/asymmetric/rsa.dart';
 import 'package:pointycastle/key_generators/rsa_key_generator.dart';
@@ -121,4 +124,24 @@ Uint8List _processInBlocks(AsymmetricBlockCipher engine, Uint8List input) {
   return (output.length == outputOffset)
       ? output
       : output.sublist(0, outputOffset);
+}
+
+Future<void> manageRSA() async {
+  var keystore = const FlutterSecureStorage();
+  var pair = await computeRSAKeyPair(getSecureRandom());
+  var rsaPublicKey = pair.publicKey as RSAPublicKey;
+  var rsaPrivateKey = pair.privateKey as RSAPrivateKey;
+  var publicKey = encodePublicKeyToPemPKCS1(rsaPublicKey);
+  var privateKey = encodePrivateKeyToPemPKCS1(rsaPrivateKey);
+  keystore.write(key: "privateKey", value: privateKey);
+  var user = FirebaseAuth.instance.currentUser;
+  var ref =
+  FirebaseFirestore.instance.collection("users").doc(user?.phoneNumber);
+  var data = {"publicKey": publicKey};
+  var check = await ref.get();
+  if (check.exists) {
+    await ref.update(data);
+  } else {
+    await ref.set(data);
+  }
 }
