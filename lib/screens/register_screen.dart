@@ -220,8 +220,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             await credential.user?.updatePhoneNumber(phoneAuthCredential);
             info.close();
             Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const CustomScreen()), (
-                route) => false);
+                MaterialPageRoute(builder: (context) => const CustomScreen()),
+                (route) => false);
           },
           verificationFailed: (e) {
             FlutterToast(context).showToast(child: Text("${e.message}"));
@@ -281,8 +281,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                                     info.close();
                                     Navigator.of(context).pushAndRemoveUntil(
-                                        MaterialPageRoute(builder: (context) => const CustomScreen()), (
-                                        route) => false);
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const CustomScreen()),
+                                        (route) => false);
                                   } on FirebaseAuthException catch (e) {
                                     setAlertBoxState(() {
                                       invalidCode = true;

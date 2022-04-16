@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:sharocrypt/screens/file_encryption.dart';
+import 'package:sharocrypt/screens/login_screen.dart';
 
 class CustomScreen extends StatefulWidget {
   const CustomScreen({Key? key}) : super(key: key);
@@ -52,7 +53,7 @@ class _CustomScreenState extends State<CustomScreen> {
                         left: 20,
                         top: 50,
                         child: Row(
-                          children:  [
+                          children: [
                             const Text(
                               "Hello,",
                               style:
@@ -318,6 +319,12 @@ class _CustomScreenState extends State<CustomScreen> {
                             child: InkWell(
                               onTap: () async {
                                 await FirebaseAuth.instance.signOut();
+                                Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const LoginScreen()),
+                                    (route) => false);
                               },
                               child: const Padding(
                                 padding: EdgeInsets.all(8.0),

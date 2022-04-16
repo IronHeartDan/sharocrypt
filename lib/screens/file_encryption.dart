@@ -10,6 +10,7 @@ import 'package:flutter_advanced_segment/flutter_advanced_segment.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sharocrypt/screens/search_screen.dart';
 
 class FileEncryption extends StatefulWidget {
   const FileEncryption({Key? key}) : super(key: key);
@@ -276,11 +277,19 @@ class _FileEncryptionState extends State<FileEncryption> {
     }
 
     var res = await FilePicker.platform.pickFiles();
+    bool? shouldSet = null;
+    if (res != null) {
+      shouldSet = await Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => const SearchScreen()));
+    }
 
-    setState(() {
-      _fileName = res?.files[0].name;
-      _path = res?.paths[0];
-    });
+    if (shouldSet != null && shouldSet) {
+      print("State Happening");
+      setState(() {
+        _fileName = res?.files[0].name;
+        _path = res?.paths[0];
+      });
+    }
   }
 
   void handleEncryption() async {
