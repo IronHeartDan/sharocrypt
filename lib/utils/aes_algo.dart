@@ -4,10 +4,9 @@ import 'package:encrypt/encrypt.dart' as share_crypt;
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
-final iv = share_crypt.IV.fromLength(16);
 
 Future<void> triggerEncrypt(
-    String _path, String fileName,share_crypt.Key key) async {
+    String _path, String fileName,share_crypt.Key key,share_crypt.IV iv) async {
   var _file = File(_path);
   var bits8 = await _file.readAsBytes(); //8bits
   // var input = bits8.buffer.asUint16List(); // 128bits
@@ -25,7 +24,7 @@ Future<void> triggerEncrypt(
 }
 
 Future<void> triggerDecrypt(
-    String _path, share_crypt.Key key) async {
+    String _path, share_crypt.Key key,share_crypt.IV iv) async {
   var dir = await getExternalStorageDirectory();
 
   var extension = _path.split(".").last;

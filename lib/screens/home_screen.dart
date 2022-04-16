@@ -31,6 +31,9 @@ class _HomeScreenState extends State<HomeScreen> {
   share_crypt.Key key = share_crypt.Key.fromSecureRandom(32);
   final iv = share_crypt.IV.fromLength(16);
 
+  var convertIvToString;
+  share_crypt.IV? convertToIv;
+
   RSAPrivateKey? _privateKey;
   RSAPublicKey? _publicKey;
 

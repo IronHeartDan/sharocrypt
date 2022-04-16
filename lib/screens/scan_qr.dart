@@ -1,8 +1,20 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:basic_utils/basic_utils.dart';
+import 'package:encrypt/encrypt.dart' as share_crypt;
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hexcolor/hexcolor.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:sharocrypt/utils/rsa_algo.dart';
 
 class ScanQr extends StatefulWidget {
   const ScanQr({Key? key}) : super(key: key);
@@ -16,6 +28,11 @@ class _ScanQrState extends State<ScanQr> {
 
   Barcode? result;
   QRViewController? controller;
+  Uint8List? encryptedFile;
+  Reference? _reference;
+  bool _isDownloading = false;
+  bool _isDecrypting = false;
+  var keystore = const FlutterSecureStorage();
 
   // In order to get hot reload to work we need to pause the camera if the platform
   // is android, or resume the camera if the platform is iOS.
@@ -45,8 +62,7 @@ class _ScanQrState extends State<ScanQr> {
     if (status.isDenied) {
       status = await Permission.camera.request();
       if (status.isGranted) {
-        setState(() {
-        });
+        setState(() {});
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Camera Permission Denied")));
@@ -62,7 +78,7 @@ class _ScanQrState extends State<ScanQr> {
         ? 250.0
         : 300.0;
 
-    if(result != null){
+    if (result != null) {
       return Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.white,
@@ -73,9 +89,127 @@ class _ScanQrState extends State<ScanQr> {
           ),
         ),
         body: Container(
+          padding: const EdgeInsets.all(10.0),
           child: Column(
             children: [
+              QrImage(
+                data: result!.code!,
+                size: 250,
+                backgroundColor: Colors.white,
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          shape: const RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10))),
+                          primary: HexColor("#3A3843"),
+                          onPrimary: Colors.white),
+                      onPressed: () async {
+                        if (_isDownloading || encryptedFile != null) {
+                          return;
+                        }
+                        setState(() {
+                          _isDownloading = true;
+                        });
+                        var info =
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Row(
+                            children: const [
+                              CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                              SizedBox(
+                                width: 20,
+                              ),
+                              Text("Downloading"),
+                            ],
+                          ),
+                          duration: const Duration(days: 365),
+                          behavior: SnackBarBehavior.fixed,
+                          dismissDirection: DismissDirection.none,
+                        ));
+                        var qrData = jsonDecode(result!.code!);
+                        setState(() {
+                          _reference = FirebaseStorage.instance
+                              .refFromURL(qrData["URL"]);
+                        });
 
+                        var data = await _reference!.getData();
+
+                        setState(() {
+                          encryptedFile = data;
+                          _isDownloading = false;
+                        });
+                        info.close();
+                      },
+                      child: _isDownloading
+                          ? const CircularProgressIndicator()
+                          : const Text("Download"))),
+              const SizedBox(
+                height: 20,
+              ),
+              SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          shape: const RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10))),
+                          primary: HexColor("#3A3843"),
+                          onPrimary: Colors.white),
+                      onPressed: () async {
+                        if (encryptedFile != null) {
+                          var info = ScaffoldMessenger.of(context)
+                              .showSnackBar(SnackBar(
+                            content: Row(
+                              children: const [
+                                CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                                SizedBox(
+                                  width: 20,
+                                ),
+                                Text("Decrypting"),
+                              ],
+                            ),
+                            duration: const Duration(days: 365),
+                            behavior: SnackBarBehavior.fixed,
+                            dismissDirection: DismissDirection.none,
+                          ));
+                          var qrData = jsonDecode(result!.code!);
+                          var encryptedKey = qrData["KEY"];
+                          var base64IV = qrData["IV"];
+                          var privateKey =
+                              await keystore.read(key: "privateKey");
+                          var rsaPrivateKey =
+                              CryptoUtils.rsaPrivateKeyFromPemPkcs1(
+                                  privateKey!);
+
+                          var keyBuffer = rsaDecrypt(rsaPrivateKey,
+                              base64Decode(encryptedKey).buffer.asUint8List());
+
+                          var key = share_crypt.Key.fromBase64(
+                              base64Encode(keyBuffer));
+                          var iv = share_crypt.IV.fromBase64(base64IV);
+                          print(key.base64);
+                          print(iv.base64);
+                          await triggerDecrypt(key, iv);
+                          info.close();
+                        } else {
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                            content: Text("Please Download The File"),
+                          ));
+                        }
+                      },
+                      child: const Text("Decrypt"))),
             ],
           ),
         ),
@@ -105,6 +239,23 @@ class _ScanQrState extends State<ScanQr> {
     );
   }
 
+  Future<void> triggerDecrypt(share_crypt.Key key, share_crypt.IV iv) async {
+    var enc = share_crypt.Encrypted(encryptedFile!);
+
+    // Compute=
+    var map = {"encrypted": enc, "key": key, "iv": iv};
+    var decryption = await compute(decrypt, map);
+
+    var dir = await getApplicationDocumentsDirectory();
+
+    //Save
+    var toSave = File("${dir.path}/${_reference!.name}");
+    await toSave.writeAsBytes(decryption);
+
+    await OpenFile.open(toSave.path);
+  }
+
+
   void _onQRViewCreated(QRViewController controller) {
     setState(() {
       this.controller = controller;
@@ -112,7 +263,6 @@ class _ScanQrState extends State<ScanQr> {
     controller.scannedDataStream.listen((scanData) {
       setState(() {
         result = scanData;
-        print(result?.code);
       });
     });
   }
@@ -122,4 +272,11 @@ class _ScanQrState extends State<ScanQr> {
     controller?.dispose();
     super.dispose();
   }
+}
+
+Future<List<int>> decrypt(Map map) async {
+  // Decryption
+  final encryptor = share_crypt.Encrypter(share_crypt.AES(map['key']));
+  final decryption = encryptor.decryptBytes(map['encrypted'], iv: map['iv']);
+  return decryption;
 }
