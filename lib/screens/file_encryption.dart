@@ -571,6 +571,7 @@ class _FileEncryptionState extends State<FileEncryption> {
                             var painter = QrPainter.withQr(
                               qr: qrCode!,
                               color: const Color(0xFF000000),
+                              emptyColor: Colors.white,
                               gapless: true,
                               embeddedImageStyle: null,
                               embeddedImage: null,
@@ -583,7 +584,7 @@ class _FileEncryptionState extends State<FileEncryption> {
                                 .toString();
                             String path = '$tempPath/$ts.png';
 
-                            final picData = await painter.toImageData(2048,
+                            final picData = await painter.toImageData(250,
                                 format: ImageByteFormat.png);
 
                             await writeToFile(picData!, path);
