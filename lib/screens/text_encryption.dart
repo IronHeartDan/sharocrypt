@@ -8,7 +8,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_advanced_segment/flutter_advanced_segment.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:path_provider/path_provider.dart';
@@ -27,7 +26,6 @@ class TextEncryption extends StatefulWidget {
 }
 
 class _TextEncryptionState extends State<TextEncryption> {
-  final _controller = ValueNotifier("enc");
   final _plainTextController = TextEditingController();
   final _keyEditingController = TextEditingController();
 
@@ -45,9 +43,6 @@ class _TextEncryptionState extends State<TextEncryption> {
   @override
   void initState() {
     super.initState();
-    _controller.addListener(() {
-      print(_controller.value);
-    });
     _keyEditingController.text = key.base64;
   }
 
@@ -124,18 +119,6 @@ class _TextEncryptionState extends State<TextEncryption> {
                 ),
                 const SizedBox(
                   height: 50,
-                ),
-                AdvancedSegment(
-                    controller: _controller,
-                    activeStyle: const TextStyle(fontWeight: FontWeight.normal),
-                    inactiveStyle:
-                        const TextStyle(fontWeight: FontWeight.normal),
-                    segments: const {
-                      "enc": "Encryption",
-                      "dec": "Decryption",
-                    }),
-                const SizedBox(
-                  height: 20,
                 ),
                 TextFormField(
                   controller: _plainTextController,
@@ -239,97 +222,95 @@ class _TextEncryptionState extends State<TextEncryption> {
         .push(MaterialPageRoute(builder: (context) => const SearchScreen()));
 
     if (receiverPublicKey != null) {
+      setState(() {
+        _processing = true;
+      });
+      var info = ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Encrypting Plain Text"),
+        duration: Duration(days: 365),
+        dismissDirection: DismissDirection.none,
+      ));
+      await triggerEncrypt();
+      info.close();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Encryption Finished")));
+      setState(() {
+        _processing = false;
+      });
 
-
-    setState(() {
-      _processing = true;
-    });
-    var info = ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text("Encrypting Plain Text"),
-      duration: Duration(days: 365),
-      dismissDirection: DismissDirection.none,
-    ));
-    await triggerEncrypt();
-    info.close();
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Encryption Finished")));
-    setState(() {
-      _processing = false;
-    });
-
-    await showModalBottomSheet(
-        enableDrag: false,
-        isDismissible: false,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-        ),
-        context: context,
-        builder: (context) {
-          return WillPopScope(
-            onWillPop: () async {
-              if (_currentEncryption != null) {
-                await showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: const Text("Dismiss Encrypted File?"),
-                        content: const Text(
-                            "Please upload the file to be able to share"),
-                        actions: [
-                          TextButton(
-                              onPressed: () {
-                                handleDismiss();
-                              },
-                              child: const Text(
-                                "Dismiss File?",
-                                style: TextStyle(color: Colors.red),
-                              )),
-                          TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text("OK")),
-                        ],
-                      );
-                    });
-                return false;
-              }
-              return true;
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                children: [
-                  const Text(
-                    "Text Encrypted",
-                    style: TextStyle(
-                      fontSize: 24,
+      await showModalBottomSheet(
+          enableDrag: false,
+          isDismissible: false,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(10), topRight: Radius.circular(10)),
+          ),
+          context: context,
+          builder: (context) {
+            return WillPopScope(
+              onWillPop: () async {
+                if (_currentEncryption != null) {
+                  await showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text("Dismiss Encrypted File?"),
+                          content: const Text(
+                              "Please upload the file to be able to share"),
+                          actions: [
+                            TextButton(
+                                onPressed: () {
+                                  handleDismiss();
+                                },
+                                child: const Text(
+                                  "Dismiss File?",
+                                  style: TextStyle(color: Colors.red),
+                                )),
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text("OK")),
+                          ],
+                        );
+                      });
+                  return false;
+                }
+                return true;
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  children: [
+                    const Text(
+                      "Text Encrypted",
+                      style: TextStyle(
+                        fontSize: 24,
+                      ),
                     ),
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            shape: const RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                            primary: HexColor("#3A3843"),
-                            onPrimary: Colors.white),
-                        onPressed: () {
-                          handleUpload();
-                        },
-                        child: const Text("Upload")),
-                  ),
-                ],
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              shape: const RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10))),
+                              primary: HexColor("#3A3843"),
+                              onPrimary: Colors.white),
+                          onPressed: () {
+                            handleUpload();
+                          },
+                          child: const Text("Upload")),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        });
+            );
+          });
     }
   }
 

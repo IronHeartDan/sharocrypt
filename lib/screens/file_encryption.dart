@@ -11,7 +11,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_advanced_segment/flutter_advanced_segment.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,7 +28,6 @@ class FileEncryption extends StatefulWidget {
 }
 
 class _FileEncryptionState extends State<FileEncryption> {
-  final _controller = ValueNotifier("enc");
   final _keyEditingController = TextEditingController();
 
   String? _path;
@@ -47,9 +45,6 @@ class _FileEncryptionState extends State<FileEncryption> {
   @override
   void initState() {
     super.initState();
-    _controller.addListener(() {
-      print(_controller.value);
-    });
     _keyEditingController.text = key.base64;
   }
 
@@ -127,18 +122,6 @@ class _FileEncryptionState extends State<FileEncryption> {
                 const SizedBox(
                   height: 50,
                 ),
-                AdvancedSegment(
-                    controller: _controller,
-                    activeStyle: const TextStyle(fontWeight: FontWeight.normal),
-                    inactiveStyle:
-                        const TextStyle(fontWeight: FontWeight.normal),
-                    segments: const {
-                      "enc": "Encryption",
-                      "dec": "Decryption",
-                    }),
-                const SizedBox(
-                  height: 20,
-                ),
                 Container(
                   height: 50,
                   padding: const EdgeInsets.all(10.0),
@@ -204,20 +187,6 @@ class _FileEncryptionState extends State<FileEncryption> {
                             _generateRandomKey();
                           },
                           child: const Text("Random")),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    SizedBox(
-                      height: 30,
-                      child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              primary: Colors.grey,
-                              shape: const RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10)))),
-                          onPressed: () {},
-                          child: const Text("Keystore")),
                     ),
                     const SizedBox(
                       width: 10,

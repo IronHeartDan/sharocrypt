@@ -234,27 +234,27 @@ class _CustomScreenState extends State<CustomScreen> {
                 padding: const EdgeInsets.all(10.0),
                 child: Column(
                   children: [
-                    Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: Theme.of(context)
-                            .colorScheme
-                            .copyWith(primary: Colors.black),
-                      ),
-                      child: TextFormField(
-                        decoration: InputDecoration(
-                            label: const Text("Search"),
-                            floatingLabelBehavior: FloatingLabelBehavior.never,
-                            prefixIcon: const Icon(Icons.search),
-                            suffixIcon: const Icon(Icons.mic),
-                            fillColor: HexColor("#EFEFEF"),
-                            filled: true,
-                            border: OutlineInputBorder(
-                                borderSide: BorderSide.none,
-                                borderRadius: BorderRadius.circular(10))),
-                      ),
-                    ),
+                    // Theme(
+                    //   data: Theme.of(context).copyWith(
+                    //     colorScheme: Theme.of(context)
+                    //         .colorScheme
+                    //         .copyWith(primary: Colors.black),
+                    //   ),
+                    //   child: TextFormField(
+                    //     decoration: InputDecoration(
+                    //         label: const Text("Search"),
+                    //         floatingLabelBehavior: FloatingLabelBehavior.never,
+                    //         prefixIcon: const Icon(Icons.search),
+                    //         suffixIcon: const Icon(Icons.mic),
+                    //         fillColor: HexColor("#EFEFEF"),
+                    //         filled: true,
+                    //         border: OutlineInputBorder(
+                    //             borderSide: BorderSide.none,
+                    //             borderRadius: BorderRadius.circular(10))),
+                    //   ),
+                    // ),
                     const SizedBox(
-                      height: 20,
+                      height: 50,
                     ),
                     const Text(
                       "Encryption is a key of\nsecuring the future",
