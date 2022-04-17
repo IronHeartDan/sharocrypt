@@ -216,13 +216,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_advanced_segment:
-    dependency: "direct main"
-    description:
-      name: flutter_advanced_segment
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.0.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -304,7 +297,7 @@ packages:
     source: hosted
     version: "2.0.6"
   http:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: http
       url: "https://pub.dartlang.org"

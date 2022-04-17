@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:sharocrypt/screens/custom_home_scree.dart';
+import 'package:sharocrypt/screens/home_scree.dart';
 import 'package:sharocrypt/screens/register_screen.dart';
 import 'package:validators/validators.dart';
 

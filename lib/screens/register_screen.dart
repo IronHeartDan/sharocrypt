@@ -7,7 +7,7 @@ import 'package:sharocrypt/screens/login_screen.dart';
 import 'package:sharocrypt/utils/rsa_algo.dart';
 import 'package:validators/validators.dart';
 
-import 'custom_home_scree.dart';
+import 'home_scree.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);

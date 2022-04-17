@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:sharocrypt/screens/custom_home_scree.dart';
+import 'package:sharocrypt/screens/home_scree.dart';
 import 'package:sharocrypt/screens/login_screen.dart';
 
 void main() async {
