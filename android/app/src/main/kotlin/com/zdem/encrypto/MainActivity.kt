@@ -1,4 +1,4 @@
-package com.zdem.sharocrypt
+package com.zdem.encrypto
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -50,20 +50,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
               tiles: <SettingsTile>[
                 SettingsTile.navigation(
                   onPressed: (context) async {
-                    var info = ScaffoldMessenger.of(context)
-                        .showSnackBar(const SnackBar(
-                      content: Text("Processing RSA"),
-                      dismissDirection: DismissDirection.none,
-                      duration: Duration(days: 365),
+                    await showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Generate RSA"),
+                            content:
+                                const Text("Are you sure you want to logout ?"),
+                            actions: [
+                              TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text("Cancel")),
+                              TextButton(
+                                  onPressed: () async {
+                                    Navigator.of(context).pop();
+
+                                    var info = ScaffoldMessenger.of(context)
+                                        .showSnackBar(const SnackBar(
+                                      content: Text("Processing RSA"),
+                                      dismissDirection: DismissDirection.none,
+                                      duration: Duration(days: 365),
+                                    ));
+                                    setState(() {
+                                      _processingRSA = true;
+                                    });
+                                    await manageRSA();
+                                    info.close();
+                                    setState(() {
+                                      _processingRSA = false;
+                                    });
+                                  },
+                                  child: const Text(
+                                    "Generate",
+                                    style: TextStyle(color: Colors.green),
+                                  )),
+                            ],
+                          );
+                        });
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("RSA Generated"),
                     ));
-                    setState(() {
-                      _processingRSA = true;
-                    });
-                    await manageRSA();
-                    info.close();
-                    setState(() {
-                      _processingRSA = false;
-                    });
                   },
                   enabled: !_processingRSA,
                   leading: const Icon(Icons.vpn_key_outlined),
@@ -72,12 +100,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 SettingsTile.navigation(
                   onPressed: (context) async {
-                    await FirebaseAuth.instance.signOut();
-                    Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const LoginScreen()),
-                        (route) => false);
+                    await showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Log Out ?"),
+                            content:
+                                const Text("Are you sure you want to logout ?"),
+                            actions: [
+                              TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text("Cancel")),
+                              TextButton(
+                                  onPressed: () async {
+                                    await FirebaseAuth.instance.signOut();
+                                    Navigator.pushAndRemoveUntil(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const LoginScreen()),
+                                        (route) => false);
+                                  },
+                                  child: const Text(
+                                    "LogOut",
+                                    style: TextStyle(color: Colors.red),
+                                  )),
+                            ],
+                          );
+                        });
                   },
                   leading: const Icon(
                     Icons.logout,

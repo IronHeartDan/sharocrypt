@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.zdem.sharocrypt">
+    package="com.zdem.encrypto">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission
@@ -13,7 +13,7 @@
     <application
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:label="sharocrypt"
+        android:label="Encrypto"
         android:requestLegacyExternalStorage="true">
         <activity
             android:name=".MainActivity"
