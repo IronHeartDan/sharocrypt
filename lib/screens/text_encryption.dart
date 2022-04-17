@@ -3,37 +3,35 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:basic_utils/basic_utils.dart';
 import 'package:encrypt/encrypt.dart' as share_crypt;
-import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_advanced_segment/flutter_advanced_segment.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:pointycastle/asymmetric/api.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sharocrypt/screens/search_screen.dart';
-import 'package:sharocrypt/utils/rsa_algo.dart';
 
-class FileEncryption extends StatefulWidget {
-  const FileEncryption({Key? key}) : super(key: key);
+import '../utils/rsa_algo.dart';
+
+class TextEncryption extends StatefulWidget {
+  const TextEncryption({Key? key}) : super(key: key);
 
   @override
-  State<FileEncryption> createState() => _FileEncryptionState();
+  State<TextEncryption> createState() => _TextEncryptionState();
 }
 
-class _FileEncryptionState extends State<FileEncryption> {
+class _TextEncryptionState extends State<TextEncryption> {
   final _controller = ValueNotifier("enc");
+  final _plainTextController = TextEditingController();
   final _keyEditingController = TextEditingController();
 
-  String? _path;
-  String? _fileName;
+  bool isReady = false;
 
   share_crypt.Key key = share_crypt.Key.fromSecureRandom(32);
   final iv = share_crypt.IV.fromLength(16);
@@ -120,7 +118,7 @@ class _FileEncryptionState extends State<FileEncryption> {
                 const SizedBox(
                   width: double.infinity,
                   child: Text(
-                    "File Encryption",
+                    "Text Encryption",
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -139,42 +137,12 @@ class _FileEncryptionState extends State<FileEncryption> {
                 const SizedBox(
                   height: 20,
                 ),
-                Container(
-                  height: 50,
-                  padding: const EdgeInsets.all(10.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: const BorderRadius.all(Radius.circular(10)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.insert_drive_file_outlined),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      _fileName != null
-                          ? Text(_fileName!)
-                          : const Text("Select a file")
-                    ],
-                  ),
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          primary: HexColor("#DCDCDC"),
-                          onPrimary: Colors.black,
-                          shape: const RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10)))),
-                      onPressed: () {
-                        selectFile();
-                      },
-                      child: const Text("Select File")),
+                TextFormField(
+                  controller: _plainTextController,
+                  decoration: const InputDecoration(
+                      label: Text("Enter Plain Text"),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)))),
                 ),
                 const SizedBox(
                   height: 20,
@@ -204,20 +172,6 @@ class _FileEncryptionState extends State<FileEncryption> {
                             _generateRandomKey();
                           },
                           child: const Text("Random")),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    SizedBox(
-                      height: 30,
-                      child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              primary: Colors.grey,
-                              shape: const RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10)))),
-                          onPressed: () {},
-                          child: const Text("Keystore")),
                     ),
                     const SizedBox(
                       width: 10,
@@ -274,49 +228,25 @@ class _FileEncryptionState extends State<FileEncryption> {
     );
   }
 
-  void selectFile() async {
-    var checkPermission = await Permission.storage.status;
-
-    if (checkPermission.isPermanentlyDenied) {
-      FlutterToast(context).showToast(child: Text(checkPermission.toString()));
+  void handleEncryption() async {
+    if (_plainTextController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please Enter Plain Text")));
       return;
     }
 
-    if (checkPermission.isDenied) {
-      var res = await Permission.storage.request();
-      if (res.isDenied || res.isPermanentlyDenied) {
-        FlutterToast(context)
-            .showToast(child: Text(checkPermission.toString()));
-        return;
-      }
-    }
-
-    var res = await FilePicker.platform.pickFiles();
-    if (res != null) {
-      receiverPublicKey = await Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => const SearchScreen()));
-    }
+    receiverPublicKey = await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => const SearchScreen()));
 
     if (receiverPublicKey != null) {
-      setState(() {
-        _fileName = res?.files[0].name;
-        _path = res?.paths[0];
-      });
-    }
-  }
 
-  void handleEncryption() async {
-    if (_path == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Please Select File")));
-      return;
-    }
+
     setState(() {
       _processing = true;
     });
-    var info = ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text("Encrypting $_fileName"),
-      duration: const Duration(days: 365),
+    var info = ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text("Encrypting Plain Text"),
+      duration: Duration(days: 365),
       dismissDirection: DismissDirection.none,
     ));
     await triggerEncrypt();
@@ -372,7 +302,7 @@ class _FileEncryptionState extends State<FileEncryption> {
               child: Column(
                 children: [
                   const Text(
-                    "File Encrypted",
+                    "Text Encrypted",
                     style: TextStyle(
                       fontSize: 24,
                     ),
@@ -400,11 +330,11 @@ class _FileEncryptionState extends State<FileEncryption> {
             ),
           );
         });
+    }
   }
 
   Future<void> triggerEncrypt() async {
-    var _file = File(_path!);
-    var bits8 = await _file.readAsBytes(); //8bits
+    var bits8 = utf8.encode(_plainTextController.text); //8bits
     // var input = bits8.buffer.asUint16List(); // 128bits
 
     // Compute
@@ -425,8 +355,8 @@ class _FileEncryptionState extends State<FileEncryption> {
     var storageRef = FirebaseStorage.instance
         .ref("encrypted_files")
         .child(FirebaseAuth.instance.currentUser!.phoneNumber!);
-    ;
-    var ref = storageRef.child(_fileName!);
+    var ref =
+        storageRef.child(DateTime.now().millisecondsSinceEpoch.toString());
     Navigator.of(context).pop();
     var info = ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Row(
@@ -445,13 +375,11 @@ class _FileEncryptionState extends State<FileEncryption> {
       dismissDirection: DismissDirection.none,
     ));
     ref
-        .putData(_currentEncryption!.bytes)
+        .putString(_plainTextController.text)
         .snapshotEvents
         .listen((taskSnapshot) async {
       switch (taskSnapshot.state) {
         case TaskState.running:
-          var status = taskSnapshot.bytesTransferred / taskSnapshot.totalBytes;
-          print(status);
           setState(() {
             _uploading = true;
           });
@@ -464,8 +392,7 @@ class _FileEncryptionState extends State<FileEncryption> {
           generateQR(downloadURL, encryptedKey, ref);
           setState(() {
             _uploading = false;
-            _path = null;
-            _fileName = null;
+            isReady = false;
             _currentEncryption = null;
           });
           break;
@@ -486,8 +413,8 @@ class _FileEncryptionState extends State<FileEncryption> {
     Navigator.of(context).pop();
     Navigator.of(context).pop();
     setState(() {
-      _path = null;
-      _fileName = null;
+      _plainTextController.clear();
+      isReady = false;
       _currentEncryption = null;
       receiverPublicKey = null;
       _generateRandomKey();

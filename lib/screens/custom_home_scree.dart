@@ -6,6 +6,7 @@ import 'package:sharocrypt/screens/file_encryption.dart';
 import 'package:sharocrypt/screens/scan_qr.dart';
 import 'package:sharocrypt/screens/secure_password.dart';
 import 'package:sharocrypt/screens/settings_screen.dart';
+import 'package:sharocrypt/screens/text_encryption.dart';
 
 import 'about_screen.dart';
 
@@ -125,7 +126,12 @@ class _CustomScreenState extends State<CustomScreen> {
                                       borderRadius: BorderRadius.all(
                                           Radius.circular(10))),
                                   child: InkWell(
-                                    onTap: () {},
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const TextEncryption()));
+                                    },
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Row(
