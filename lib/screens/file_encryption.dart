@@ -392,25 +392,25 @@ class _FileEncryptionState extends State<FileEncryption> {
     var storageRef = FirebaseStorage.instance
         .ref("encrypted_files")
         .child(FirebaseAuth.instance.currentUser!.phoneNumber!);
-    ;
+
     var ref = storageRef.child(_fileName!);
     Navigator.of(context).pop();
-    var info = ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(
-        children: const [
-          CircularProgressIndicator(
-            color: Colors.white,
-          ),
-          SizedBox(
-            width: 20,
-          ),
-          Text("Uploading"),
-        ],
-      ),
-      duration: const Duration(days: 365),
-      behavior: SnackBarBehavior.fixed,
-      dismissDirection: DismissDirection.none,
-    ));
+    // var info = ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    //   content: Row(
+    //     children: const [
+    //       CircularProgressIndicator(
+    //         color: Colors.white,
+    //       ),
+    //       SizedBox(
+    //         width: 20,
+    //       ),
+    //       Text("Uploading"),
+    //     ],
+    //   ),
+    //   duration: const Duration(days: 365),
+    //   behavior: SnackBarBehavior.fixed,
+    //   dismissDirection: DismissDirection.none,
+    // ));
     ref
         .putData(_currentEncryption!.bytes)
         .snapshotEvents
@@ -424,8 +424,8 @@ class _FileEncryptionState extends State<FileEncryption> {
           });
           break;
         case TaskState.success:
-          info.close();
-          FlutterToast(context).showToast(child: const Text("Uploaded"));
+          // info.close();
+
           var downloadURL = await taskSnapshot.ref.getDownloadURL();
           var encryptedKey = encryptKey();
           generateQR(downloadURL, encryptedKey, ref);
@@ -437,7 +437,7 @@ class _FileEncryptionState extends State<FileEncryption> {
           });
           break;
         case TaskState.error:
-          info.close();
+          // info.close();
           FlutterToast(context)
               .showToast(child: const Text("An Error Occurred"));
           break;
@@ -468,14 +468,15 @@ class _FileEncryptionState extends State<FileEncryption> {
 
   void generateQR(
       String downloadURL, String encryptedKey, Reference reference) async {
-    var data =
-        jsonEncode({"TYPE":1,"URL": downloadURL, "KEY": encryptedKey, "IV": iv.base64});
+    var data = jsonEncode(
+        {"TYPE": 1, "URL": downloadURL, "KEY": encryptedKey, "IV": iv.base64});
     var qrValidationResult = QrValidator.validate(
       data: data,
       version: QrVersions.auto,
       errorCorrectionLevel: QrErrorCorrectLevel.L,
     );
     await showModalBottomSheet(
+        isScrollControlled: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
               topLeft: Radius.circular(10), topRight: Radius.circular(10)),
@@ -564,6 +565,7 @@ class _FileEncryptionState extends State<FileEncryption> {
                           if (qrValidationResult.status ==
                               QrValidationStatus.valid) {
                             var qrCode = qrValidationResult.qrCode;
+
                             var painter = QrPainter.withQr(
                               qr: qrCode!,
                               color: const Color(0xFF000000),
@@ -580,7 +582,7 @@ class _FileEncryptionState extends State<FileEncryption> {
                                 .toString();
                             String path = '$tempPath/$ts.png';
 
-                            final picData = await painter.toImageData(250,
+                            final picData = await painter.toImageData(2048,
                                 format: ImageByteFormat.png);
 
                             await writeToFile(picData!, path);

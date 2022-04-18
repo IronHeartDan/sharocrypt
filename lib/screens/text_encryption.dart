@@ -6,7 +6,8 @@ import 'dart:ui';
 import 'package:encrypt/encrypt.dart' as share_crypt;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_advanced_segment/flutter_advanced_segment.dart';
+import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pointycastle/asymmetric/api.dart';
@@ -24,8 +25,6 @@ class TextEncryption extends StatefulWidget {
 }
 
 class _TextEncryptionState extends State<TextEncryption> {
-  final _segmentController = ValueNotifier("enc");
-
   final _plainTextController = TextEditingController();
   final _keyEditingController = TextEditingController();
 
@@ -37,15 +36,11 @@ class _TextEncryptionState extends State<TextEncryption> {
   share_crypt.Encrypted? _currentEncryption;
 
   bool _processing = false;
-  bool _uploading = false;
   RSAPublicKey? receiverPublicKey;
 
   @override
   void initState() {
     super.initState();
-    _segmentController.addListener(() {
-      print(_segmentController.value);
-    });
     _keyEditingController.text = key.base64;
   }
 
@@ -79,27 +74,8 @@ class _TextEncryptionState extends State<TextEncryption> {
                 );
               });
           return false;
-        } else if (_uploading) {
-          showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: const Text("Uploading File"),
-                  content: const Text(
-                      "Uploading under process please wait on the screen"),
-                  actions: [
-                    TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text("OK"))
-                  ],
-                );
-              });
-          return false;
-        } else {
-          return true;
         }
+        return true;
       },
       child: Scaffold(
         appBar: AppBar(
@@ -120,12 +96,6 @@ class _TextEncryptionState extends State<TextEncryption> {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
-                const SizedBox(
-                  height: 50,
-                ),
-                AdvancedSegment(
-                    controller: _segmentController,
-                    segments: const {"enc": "Encryption", "dec": "Decryption"}),
                 const SizedBox(
                   height: 50,
                 ),
@@ -197,15 +167,13 @@ class _TextEncryptionState extends State<TextEncryption> {
                             primary: HexColor("#3A3843"),
                             onPrimary: Colors.white),
                         onPressed: () {
-                          if (!_processing && !_uploading) {
+                          if (!_processing) {
                             handleEncryption();
                           }
                         },
                         child: _processing
                             ? const CircularProgressIndicator()
-                            : _uploading
-                                ? const CircularProgressIndicator()
-                                : const Text("Encrypt"))),
+                            : const Text("Encrypt"))),
               ],
             ),
           ),
@@ -272,7 +240,7 @@ class _TextEncryptionState extends State<TextEncryption> {
   }
 
   void generateQR(String encryptedKey) async {
-    var data = jsonEncode({"TYPE":0,"KEY": encryptedKey, "IV": iv.base64});
+    var data = jsonEncode({"TYPE": 0, "KEY": encryptedKey, "IV": iv.base64});
     var qrValidationResult = QrValidator.validate(
       data: data,
       version: QrVersions.auto,
@@ -377,47 +345,76 @@ class _TextEncryptionState extends State<TextEncryption> {
                     const SizedBox(
                       height: 20,
                     ),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              shape: const RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10))),
-                              primary: HexColor("#3A3843"),
-                              onPrimary: Colors.white),
-                          onPressed: () async {
-                            if (qrValidationResult.status ==
-                                QrValidationStatus.valid) {
-                              var qrCode = qrValidationResult.qrCode;
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(10))),
+                                    primary: HexColor("#3A3843"),
+                                    onPrimary: Colors.white),
+                                onPressed: () async {
+                                  if (qrValidationResult.status ==
+                                      QrValidationStatus.valid) {
+                                    var qrCode = qrValidationResult.qrCode;
 
-                              var painter = QrPainter.withQr(
-                                qr: qrCode!,
-                                color: const Color(0xFF000000),
-                                emptyColor: Colors.white,
-                                gapless: true,
-                                embeddedImageStyle: null,
-                                embeddedImage: null,
-                              );
+                                    var painter = QrPainter.withQr(
+                                      qr: qrCode!,
+                                      color: const Color(0xFF000000),
+                                      emptyColor: Colors.white,
+                                      gapless: true,
+                                      embeddedImageStyle: null,
+                                      embeddedImage: null,
+                                    );
 
-                              Directory tempDir = await getTemporaryDirectory();
-                              String tempPath = tempDir.path;
-                              final ts = DateTime.now()
-                                  .millisecondsSinceEpoch
-                                  .toString();
-                              String path = '$tempPath/$ts.png';
+                                    Directory tempDir =
+                                        await getTemporaryDirectory();
+                                    String tempPath = tempDir.path;
+                                    final ts = DateTime.now()
+                                        .millisecondsSinceEpoch
+                                        .toString();
+                                    String path = '$tempPath/$ts.png';
 
-                              final picData = await painter.toImageData(1024,
-                                  format: ImageByteFormat.png);
+                                    final picData = await painter.toImageData(
+                                        1024,
+                                        format: ImageByteFormat.png);
 
-                              await writeToFile(picData!, path);
+                                    await writeToFile(picData!, path);
 
-                              Share.shareFiles([path], text: 'Share QR');
-                            }
-                          },
-                          child: const Text("Share")),
-                    ),
+                                    Share.shareFiles([path], text: 'Share QR');
+                                  }
+                                },
+                                child: const Text("Share")),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(10))),
+                                    primary: HexColor("#3A3843"),
+                                    onPrimary: Colors.white),
+                                onPressed: () async {
+                                  await Clipboard.setData(ClipboardData(
+                                      text: _currentEncryption?.base64));
+                                  FlutterToast(context).showToast(
+                                      child: const Text("Copied To Clipboard"));
+                                },
+                                child: const Text("Copy")),
+                          ),
+                        ),
+                      ],
+                    )
                   ],
                 ),
               ),
