@@ -142,6 +142,8 @@ class _ScanQrState extends State<ScanQr> {
                         var data = await _reference!.getData();
 
                         setState(() {
+                          print(
+                              "DOWNLOADED :${base64Encode(List<int>.from(data!))}");
                           encryptedFile = data;
                           _isDownloading = false;
                         });
@@ -183,6 +185,7 @@ class _ScanQrState extends State<ScanQr> {
                             dismissDirection: DismissDirection.none,
                           ));
                           var qrData = jsonDecode(result!.code!);
+                          print("QR DATA : $qrData");
                           var encryptedKey = qrData["KEY"];
                           var base64IV = qrData["IV"];
                           var privateKey =
@@ -197,9 +200,13 @@ class _ScanQrState extends State<ScanQr> {
                           var key = share_crypt.Key.fromBase64(
                               base64Encode(keyBuffer));
                           var iv = share_crypt.IV.fromBase64(base64IV);
-                          print(key.base64);
-                          print(iv.base64);
-                          await triggerDecrypt(key, iv);
+
+                          try {
+                            await triggerDecrypt(key, iv);
+                          } catch (e) {
+                            print("Error :: ${e}");
+                          }
+
                           info.close();
                         } else {
                           ScaffoldMessenger.of(context)
