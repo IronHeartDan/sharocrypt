@@ -469,7 +469,7 @@ class _FileEncryptionState extends State<FileEncryption> {
   void generateQR(
       String downloadURL, String encryptedKey, Reference reference) async {
     var data =
-        jsonEncode({"URL": downloadURL, "KEY": encryptedKey, "IV": iv.base64});
+        jsonEncode({"TYPE":1,"URL": downloadURL, "KEY": encryptedKey, "IV": iv.base64});
     var qrValidationResult = QrValidator.validate(
       data: data,
       version: QrVersions.auto,

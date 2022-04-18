@@ -272,7 +272,7 @@ class _TextEncryptionState extends State<TextEncryption> {
   }
 
   void generateQR(String encryptedKey) async {
-    var data = jsonEncode({"KEY": encryptedKey, "IV": iv.base64});
+    var data = jsonEncode({"TYPE":0,"KEY": encryptedKey, "IV": iv.base64});
     var qrValidationResult = QrValidator.validate(
       data: data,
       version: QrVersions.auto,
@@ -391,6 +391,7 @@ class _TextEncryptionState extends State<TextEncryption> {
                             if (qrValidationResult.status ==
                                 QrValidationStatus.valid) {
                               var qrCode = qrValidationResult.qrCode;
+
                               var painter = QrPainter.withQr(
                                 qr: qrCode!,
                                 color: const Color(0xFF000000),
