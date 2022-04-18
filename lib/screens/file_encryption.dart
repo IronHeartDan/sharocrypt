@@ -297,8 +297,6 @@ class _FileEncryptionState extends State<FileEncryption> {
     });
 
     await showModalBottomSheet(
-        enableDrag: false,
-        isDismissible: false,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
               topLeft: Radius.circular(10), topRight: Radius.circular(10)),
@@ -478,8 +476,6 @@ class _FileEncryptionState extends State<FileEncryption> {
       errorCorrectionLevel: QrErrorCorrectLevel.L,
     );
     await showModalBottomSheet(
-        enableDrag: false,
-        isDismissible: false,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
               topLeft: Radius.circular(10), topRight: Radius.circular(10)),

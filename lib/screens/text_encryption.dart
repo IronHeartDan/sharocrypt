@@ -239,8 +239,6 @@ class _TextEncryptionState extends State<TextEncryption> {
       });
 
       await showModalBottomSheet(
-          enableDrag: false,
-          isDismissible: false,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(10), topRight: Radius.circular(10)),
@@ -417,8 +415,6 @@ class _TextEncryptionState extends State<TextEncryption> {
       errorCorrectionLevel: QrErrorCorrectLevel.L,
     );
     await showModalBottomSheet(
-        enableDrag: false,
-        isDismissible: false,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
               topLeft: Radius.circular(10), topRight: Radius.circular(10)),

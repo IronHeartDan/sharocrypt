@@ -53,17 +53,16 @@ class _ScanQrState extends State<ScanQr> {
 
   void checkPermission() async {
     var status = await Permission.camera.status;
+    print("CAMERA PERMISSION ${status}");
     if (status.isPermanentlyDenied) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Camera Permission Denied")));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Camera Permission Permanently Denied")));
       Navigator.of(context).pop();
       return;
     }
     if (status.isDenied) {
       status = await Permission.camera.request();
-      if (status.isGranted) {
-        setState(() {});
-      } else {
+      if (!status.isGranted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Camera Permission Denied")));
         Navigator.of(context).pop();
@@ -254,7 +253,6 @@ class _ScanQrState extends State<ScanQr> {
 
     await OpenFile.open(toSave.path);
   }
-
 
   void _onQRViewCreated(QRViewController controller) {
     setState(() {
