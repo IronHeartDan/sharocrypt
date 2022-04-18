@@ -4,11 +4,9 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:encrypt/encrypt.dart' as share_crypt;
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter_advanced_segment/flutter_advanced_segment.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pointycastle/asymmetric/api.dart';
@@ -26,6 +24,8 @@ class TextEncryption extends StatefulWidget {
 }
 
 class _TextEncryptionState extends State<TextEncryption> {
+  final _segmentController = ValueNotifier("enc");
+
   final _plainTextController = TextEditingController();
   final _keyEditingController = TextEditingController();
 
@@ -43,6 +43,9 @@ class _TextEncryptionState extends State<TextEncryption> {
   @override
   void initState() {
     super.initState();
+    _segmentController.addListener(() {
+      print(_segmentController.value);
+    });
     _keyEditingController.text = key.base64;
   }
 
@@ -117,6 +120,12 @@ class _TextEncryptionState extends State<TextEncryption> {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
+                const SizedBox(
+                  height: 50,
+                ),
+                AdvancedSegment(
+                    controller: _segmentController,
+                    segments: const {"enc": "Encryption", "dec": "Decryption"}),
                 const SizedBox(
                   height: 50,
                 ),
@@ -197,12 +206,6 @@ class _TextEncryptionState extends State<TextEncryption> {
                             : _uploading
                                 ? const CircularProgressIndicator()
                                 : const Text("Encrypt"))),
-                const SizedBox(
-                  height: 50,
-                ),
-                const Divider(
-                  thickness: 2,
-                ),
               ],
             ),
           ),
@@ -231,160 +234,23 @@ class _TextEncryptionState extends State<TextEncryption> {
         dismissDirection: DismissDirection.none,
       ));
       await triggerEncrypt();
+      var encryptedKey = encryptKey();
+      generateQR(encryptedKey);
       info.close();
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text("Encryption Finished")));
       setState(() {
         _processing = false;
       });
-
-      await showModalBottomSheet(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-          ),
-          context: context,
-          builder: (context) {
-            return WillPopScope(
-              onWillPop: () async {
-                if (_currentEncryption != null) {
-                  await showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text("Dismiss Encrypted File?"),
-                          content: const Text(
-                              "Please upload the file to be able to share"),
-                          actions: [
-                            TextButton(
-                                onPressed: () {
-                                  handleDismiss();
-                                },
-                                child: const Text(
-                                  "Dismiss File?",
-                                  style: TextStyle(color: Colors.red),
-                                )),
-                            TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: const Text("OK")),
-                          ],
-                        );
-                      });
-                  return false;
-                }
-                return true;
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  children: [
-                    const Text(
-                      "Text Encrypted",
-                      style: TextStyle(
-                        fontSize: 24,
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              shape: const RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10))),
-                              primary: HexColor("#3A3843"),
-                              onPrimary: Colors.white),
-                          onPressed: () {
-                            handleUpload();
-                          },
-                          child: const Text("Upload")),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          });
     }
   }
 
   Future<void> triggerEncrypt() async {
-    var bits8 = utf8.encode(_plainTextController.text); //8bits
-    // var input = bits8.buffer.asUint16List(); // 128bits
-
     // Compute
-    var map = {"bytes": bits8, "key": key, "iv": iv};
+    var map = {"plainText": _plainTextController.text, "key": key, "iv": iv};
     var encryption = await compute(encryptFile, map);
     setState(() {
       _currentEncryption = encryption;
-    });
-
-    // Save
-    // var dir = await getExternalStorageDirectory();
-    //
-    // var toSave = File("${dir?.path}/$_fileName");
-    // await toSave.writeAsBytes(encryption.bytes);
-  }
-
-  Future<void> handleUpload() async {
-    var storageRef = FirebaseStorage.instance
-        .ref("encrypted_files")
-        .child(FirebaseAuth.instance.currentUser!.phoneNumber!);
-    var ref =
-        storageRef.child(DateTime.now().millisecondsSinceEpoch.toString());
-    Navigator.of(context).pop();
-    var info = ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(
-        children: const [
-          CircularProgressIndicator(
-            color: Colors.white,
-          ),
-          SizedBox(
-            width: 20,
-          ),
-          Text("Uploading"),
-        ],
-      ),
-      duration: const Duration(days: 365),
-      behavior: SnackBarBehavior.fixed,
-      dismissDirection: DismissDirection.none,
-    ));
-    ref
-        .putString(_plainTextController.text)
-        .snapshotEvents
-        .listen((taskSnapshot) async {
-      switch (taskSnapshot.state) {
-        case TaskState.running:
-          setState(() {
-            _uploading = true;
-          });
-          break;
-        case TaskState.success:
-          info.close();
-          FlutterToast(context).showToast(child: const Text("Uploaded"));
-          var downloadURL = await taskSnapshot.ref.getDownloadURL();
-          var encryptedKey = encryptKey();
-          generateQR(downloadURL, encryptedKey, ref);
-          setState(() {
-            _uploading = false;
-            isReady = false;
-            _currentEncryption = null;
-          });
-          break;
-        case TaskState.error:
-          info.close();
-          FlutterToast(context)
-              .showToast(child: const Text("An Error Occurred"));
-          break;
-        case TaskState.paused:
-          break;
-        case TaskState.canceled:
-          break;
-      }
     });
   }
 
@@ -405,16 +271,15 @@ class _TextEncryptionState extends State<TextEncryption> {
     return base64Encode(encryptedKey);
   }
 
-  void generateQR(
-      String downloadURL, String encryptedKey, Reference reference) async {
-    var data =
-        jsonEncode({"URL": downloadURL, "KEY": encryptedKey, "IV": iv.base64});
+  void generateQR(String encryptedKey) async {
+    var data = jsonEncode({"KEY": encryptedKey, "IV": iv.base64});
     var qrValidationResult = QrValidator.validate(
       data: data,
       version: QrVersions.auto,
       errorCorrectionLevel: QrErrorCorrectLevel.L,
     );
     await showModalBottomSheet(
+        isScrollControlled: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
               topLeft: Radius.circular(10), topRight: Radius.circular(10)),
@@ -430,9 +295,9 @@ class _TextEncryptionState extends State<TextEncryption> {
                   context: context,
                   builder: (context) {
                     return AlertDialog(
-                      title: const Text("Dismiss File ?"),
+                      title: const Text("Dismiss ?"),
                       content: const Text(
-                          "Please Share The QR or else Dismissing Will Also Delete The File!"),
+                          "Please Share The QR or else Dismissing Will Rest Current Progress"),
                       actions: [
                         TextButton(
                             onPressed: () async {
@@ -444,7 +309,6 @@ class _TextEncryptionState extends State<TextEncryption> {
                             )),
                         TextButton(
                             onPressed: () async {
-                              await reference.delete();
                               handleDismiss();
                             },
                             child: const Text(
@@ -462,74 +326,99 @@ class _TextEncryptionState extends State<TextEncryption> {
 
               return false;
             },
-            child: Container(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                children: [
-                  const Text(
-                    "QR-Code",
-                    style: TextStyle(
-                      fontSize: 24,
+            child: SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  children: [
+                    const Text(
+                      "QR-Code",
+                      style: TextStyle(
+                        fontSize: 24,
+                      ),
                     ),
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  const Divider(
-                    thickness: 2,
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  QrImage(
-                    data: data,
-                    size: 250,
-                    backgroundColor: Colors.white,
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            shape: const RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                            primary: HexColor("#3A3843"),
-                            onPrimary: Colors.white),
-                        onPressed: () async {
-                          if (qrValidationResult.status ==
-                              QrValidationStatus.valid) {
-                            var qrCode = qrValidationResult.qrCode;
-                            var painter = QrPainter.withQr(
-                              qr: qrCode!,
-                              color: const Color(0xFF000000),
-                              emptyColor: Colors.white,
-                              gapless: true,
-                              embeddedImageStyle: null,
-                              embeddedImage: null,
-                            );
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    const Divider(
+                      thickness: 2,
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    QrImage(
+                      data: data,
+                      size: 250,
+                      backgroundColor: Colors.white,
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    const Divider(
+                      thickness: 2,
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    TextFormField(
+                      readOnly: true,
+                      initialValue: _currentEncryption?.base64,
+                      decoration: const InputDecoration(
+                          // errorText:
+                          // hasError ? "At Least One Check Required !" : null,
+                          label: Text("Cipher Text"),
+                          border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)))),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              shape: const RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10))),
+                              primary: HexColor("#3A3843"),
+                              onPrimary: Colors.white),
+                          onPressed: () async {
+                            if (qrValidationResult.status ==
+                                QrValidationStatus.valid) {
+                              var qrCode = qrValidationResult.qrCode;
+                              var painter = QrPainter.withQr(
+                                qr: qrCode!,
+                                color: const Color(0xFF000000),
+                                emptyColor: Colors.white,
+                                gapless: true,
+                                embeddedImageStyle: null,
+                                embeddedImage: null,
+                              );
 
-                            Directory tempDir = await getTemporaryDirectory();
-                            String tempPath = tempDir.path;
-                            final ts = DateTime.now()
-                                .millisecondsSinceEpoch
-                                .toString();
-                            String path = '$tempPath/$ts.png';
+                              Directory tempDir = await getTemporaryDirectory();
+                              String tempPath = tempDir.path;
+                              final ts = DateTime.now()
+                                  .millisecondsSinceEpoch
+                                  .toString();
+                              String path = '$tempPath/$ts.png';
 
-                            final picData = await painter.toImageData(250,
-                                format: ImageByteFormat.png);
+                              final picData = await painter.toImageData(1024,
+                                  format: ImageByteFormat.png);
 
-                            await writeToFile(picData!, path);
+                              await writeToFile(picData!, path);
 
-                            Share.shareFiles([path], text: 'Share QR');
-                          }
-                        },
-                        child: const Text("Share")),
-                  ),
-                ],
+                              Share.shareFiles([path], text: 'Share QR');
+                            }
+                          },
+                          child: const Text("Share")),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -546,6 +435,6 @@ class _TextEncryptionState extends State<TextEncryption> {
 Future<share_crypt.Encrypted> encryptFile(Map map) async {
   // Encryption
   var encryptor = share_crypt.Encrypter(share_crypt.AES(map['key']));
-  var encryption = encryptor.encryptBytes(map['bytes'], iv: map['iv']);
+  var encryption = encryptor.encrypt(map['plainText'], iv: map['iv']);
   return encryption;
 }
